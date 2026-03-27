@@ -1,0 +1,122 @@
+{% extends "shared/base.html" %}
+{% block title %}Complaint #{{ complaint.id }}{% endblock %}
+{% block page_title %}Complaint #{{ complaint.id }}{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px;">
+  <a href="{{ url_for('citizen.complaints') }}" class="btn btn-outline btn-sm">← Back to My Complaints</a>
+  <a href="{{ url_for('complaint_receipt', cid=complaint.id) }}" target="_blank" class="btn btn-outline btn-sm" style="margin-left:8px;">🖨️ Print Receipt</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">
+<div>
+  <!-- COMPLAINT CARD -->
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">{{ complaint.dept_icon }} {{ complaint.dept_name }} · Filed {{ complaint.created_at[:10] }}</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;line-height:1.3;">{{ complaint.title }}</h2>
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;">
+          <span class="status status-{{ complaint.status|lower|replace(' ','-') }}">{{ complaint.status }}</span>
+          <span class="priority-{{ complaint.priority|lower }}" style="font-size:12px;">● {{ complaint.priority }}</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;background:var(--surface2);padding:14px;border-radius:8px;margin-bottom:16px;">
+      {{ complaint.description }}
+    </div>
+    {% if complaint.image_path %}
+    <div>
+      <div class="form-label">📎 Attached Photo</div>
+      <img src="{{ url_for('static', filename='uploads/' + complaint.image_path) }}"
+           style="max-width:100%;border-radius:10px;border:1px solid var(--border);margin-top:6px;" alt="Complaint image">
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="card">
+    <div class="card-title">📍 Tracking Timeline</div>
+    {% if updates %}
+    <div style="position:relative;padding-left:22px;">
+      <div style="position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border);"></div>
+      {% for u in updates %}
+      <div style="position:relative;padding-bottom:18px;">
+        <div style="position:absolute;left:-17px;width:12px;height:12px;border-radius:50%;
+          background:{% if u.status=='Resolved' %}var(--accent){% elif u.status=='Rejected' %}var(--danger){% elif u.status=='In Progress' %}var(--warn){% else %}var(--accent3){% endif %};
+          border:2px solid var(--bg);top:2px;"></div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;font-weight:600;">
+                {% if u.updated_by_role == 'admin' %}🔴 Admin{% elif u.updated_by_role == 'head' %}🟡 Municipal Head{% else %}🟢 You{% endif %}
+              </span>
+              {% if u.status %}<span class="status status-{{ u.status|lower|replace(' ','-') }}" style="font-size:9px;">{{ u.status }}</span>{% endif %}
+            </div>
+            <span style="font-size:10px;color:var(--muted);">{{ u.created_at[:16] }}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">{{ u.note }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:20px;">No updates yet. Admin will respond soon.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- STATUS PANEL -->
+<div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">📊 Status</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      {% set steps = ['Registered','In Progress','Resolved'] %}
+      {% for step in steps %}
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:28px;height:28px;border-radius:50%;border:2px solid
+          {% if complaint.status == step %}var(--accent){% elif complaint.status == 'Resolved' or (complaint.status == 'In Progress' and step == 'Registered') %}var(--accent){% else %}var(--border){% endif %};
+          background:{% if complaint.status == step %}var(--accent){% elif complaint.status == 'Resolved' and step != 'Resolved' %}rgba(0,212,170,.2){% elif complaint.status == 'In Progress' and step == 'Registered' %}rgba(0,212,170,.2){% else %}transparent{% endif %};
+          display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">
+          {% if complaint.status == 'Resolved' or (complaint.status == 'In Progress' and step == 'Registered') or complaint.status == step %}✓{% endif %}
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:{% if complaint.status == step %}var(--accent){% else %}var(--text){% endif %};">{{ step }}</div>
+        </div>
+      </div>
+      {% endfor %}
+      {% if complaint.status == 'Rejected' %}
+      <div style="padding:10px;background:rgba(239,68,68,.1);border-radius:8px;border:1px solid rgba(239,68,68,.2);">
+        <div style="font-size:12px;color:var(--danger);font-weight:600;">❌ Rejected</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">This complaint was rejected. See timeline for details.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ℹ️ Details</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+      <div><span style="color:var(--muted);">📍 Area</span><br><strong>{{ complaint.area or 'N/A' }}</strong></div>
+      <div><span style="color:var(--muted);">🏛️ Department</span><br><strong>{{ complaint.dept_icon }} {{ complaint.dept_name }}</strong></div>
+      <div><span style="color:var(--muted);">⚡ Priority</span><br><strong class="priority-{{ complaint.priority|lower }}">{{ complaint.priority }}</strong></div>
+      <div><span style="color:var(--muted);">📅 Filed on</span><br><strong>{{ complaint.created_at[:10] }}</strong></div>
+      <div><span style="color:var(--muted);">🔄 Last updated</span><br><strong>{{ complaint.updated_at[:10] }}</strong></div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

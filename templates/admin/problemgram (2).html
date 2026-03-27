@@ -1,0 +1,75 @@
+{% extends "shared/base.html" %}
+{% block title %}Problemgram{% endblock %}
+{% block page_title %}Problemgram — Admin Posts{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+<div>
+  <div class="card">
+    <div class="card-title">💬 All Posts ({{ posts|length }})</div>
+    {% for p in posts %}
+    <div style="padding:14px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div style="flex:1;">
+          {% if p.is_pinned %}<span style="font-size:9px;color:var(--warn);font-weight:700;">📌 PINNED</span>{% endif %}
+          <div style="font-size:14px;font-weight:600;margin-top:2px;">{{ p.title }}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;">{{ p.content[:200] }}{% if p.content|length > 200 %}…{% endif %}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px;">
+            {{ p.author }} · {{ p.dept_name or 'General' }} · {{ p.created_at[:10] }}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <form method="POST" action="{{ url_for('admin.pin_post', pid=p.id) }}">
+            <button type="submit" class="btn btn-outline btn-sm">{% if p.is_pinned %}Unpin{% else %}📌 Pin{% endif %}</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.delete_post', pid=p.id) }}" onsubmit="return confirm('Delete post?')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:30px;">No posts yet.</div>
+    {% endfor %}
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="card-title">✍️ New Post</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;padding:8px;background:var(--surface2);border-radius:6px;">
+      ℹ️ Only admins can post. Citizens can read only.
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_post') }}">
+      <div class="form-group"><label class="form-label">Title *</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Department</label>
+        <select name="dept_id" class="form-control">
+          <option value="">General</option>
+          {% for d in depts %}<option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Content *</label><textarea name="content" class="form-control" rows="6" required></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">📤 Publish Post</button>
+    </form>
+  </div>
+</div>
+</div>
+{% endblock %}

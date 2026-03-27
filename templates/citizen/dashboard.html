@@ -1,0 +1,153 @@
+{% extends "shared/base.html" %}
+{% block title %}Citizen Dashboard{% endblock %}
+{% block page_title %}Welcome, {{ session_name }}{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item {% if request.endpoint=='citizen.open_queries' %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- MY STATS -->
+<div class="stats-grid">
+  <div class="stat-card" style="border-left:3px solid var(--accent3);">
+    <div class="stat-val" style="color:var(--accent3);">{{ my_stats.total }}</div>
+    <div class="stat-label">My Complaints</div>
+    <div class="stat-change"><a href="{{ url_for('citizen.complaints') }}" style="color:var(--muted);font-size:11px;">View all →</a></div>
+  </div>
+  <div class="stat-card" style="border-left:3px solid var(--warn);">
+    <div class="stat-val" style="color:var(--warn);">{{ my_stats.open }}</div>
+    <div class="stat-label">Open / In Progress</div>
+    <div class="stat-change down">Awaiting action</div>
+  </div>
+  <div class="stat-card" style="border-left:3px solid var(--accent);">
+    <div class="stat-val" style="color:var(--accent);">{{ my_stats.resolved }}</div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-change up">✓ Completed</div>
+  </div>
+  <div class="stat-card" style="border-left:3px solid var(--accent2);">
+    <div class="stat-val" style="color:var(--accent2);">{{ city_stats.open_city }}</div>
+    <div class="stat-label">Open City Issues</div>
+    <div class="stat-change"><a href="{{ url_for('citizen.city_issues') }}" style="color:var(--muted);font-size:11px;">City feed →</a></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+<div>
+  <!-- MY RECENT COMPLAINTS -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">📋 My Recent Complaints
+      <a href="{{ url_for('citizen.new_complaint') }}" class="btn btn-primary btn-sm" style="margin-left:auto;">➕ New</a>
+    </div>
+    {% if my_complaints %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Title</th><th>Dept</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for c in my_complaints %}
+        <tr>
+          <td style="color:var(--muted);font-size:11px;">#{{ c.id }}</td>
+          <td>
+            <div style="font-size:13px;font-weight:500;">{{ c.title[:40] }}{% if c.title|length > 40 %}…{% endif %}</div>
+            <div style="font-size:10px;color:var(--muted);">{{ c.created_at[:10] }}</div>
+          </td>
+          <td style="font-size:13px;">{{ c.dept_icon }} {{ c.dept_name }}</td>
+          <td><span class="priority-{{ c.priority|lower }}">{{ c.priority }}</span></td>
+          <td style="white-space:nowrap;"><span class="status status-{{ c.status|lower|replace(' ','-') }}">{{ c.status }}</span></td>
+          <td><a href="{{ url_for('citizen.complaint_detail', cid=c.id) }}" class="btn btn-outline btn-sm">→</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:30px;color:var(--muted);">
+      <div style="font-size:36px;margin-bottom:10px;">📋</div>
+      <div>You haven't filed any complaints yet.</div>
+      <a href="{{ url_for('citizen.new_complaint') }}" class="btn btn-primary" style="margin-top:12px;display:inline-flex;">File your first complaint</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- PROBLEMGRAM -->
+  <div class="card">
+    <div class="card-title">💬 Problemgram — Latest Updates
+      <a href="{{ url_for('citizen.problemgram') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">View All</a>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 10px;background:var(--surface2);border-radius:6px;">
+      📢 Admin posts only · Read-only feed
+    </div>
+    {% for p in posts %}
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      {% if p.is_pinned %}<div style="font-size:9px;color:var(--warn);font-weight:700;margin-bottom:4px;">📌 PINNED</div>{% endif %}
+      <div style="font-size:13px;font-weight:600;">{{ p.title }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6;">{{ p.content[:150] }}{% if p.content|length > 150 %}… <a href="{{ url_for('citizen.problemgram') }}">read more</a>{% endif %}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px;">{{ p.author }} · {{ p.dept_name or 'General' }} · {{ p.created_at[:10] }}</div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:20px;">No posts yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- RIGHT COLUMN -->
+<div>
+  <!-- QUICK FILE -->
+  <div class="card" style="margin-bottom:16px;border:1px solid rgba(0,212,170,.3);">
+    <div class="card-title">⚡ Quick File Complaint</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Spotted an issue in your city? Report it instantly.</div>
+    <a href="{{ url_for('citizen.new_complaint') }}" class="btn btn-primary" style="width:100%;justify-content:center;">➕ File New Complaint</a>
+  </div>
+
+  <!-- NOTICES -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">📢 Latest Notices
+      <a href="{{ url_for('citizen.notices') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">All</a>
+    </div>
+    {% for n in notices %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;
+          background:{% if n.type=='Emergency' %}rgba(239,68,68,.15){% elif n.type=='Budget' %}rgba(0,212,170,.15){% elif n.type=='Tender' %}rgba(245,158,11,.15){% else %}rgba(124,106,247,.15){% endif %};
+          color:{% if n.type=='Emergency' %}var(--danger){% elif n.type=='Budget' %}var(--accent){% elif n.type=='Tender' %}var(--warn){% else %}var(--accent3){% endif %};">
+          {{ n.type }}
+        </span>
+        <span style="font-size:10px;color:var(--muted);margin-left:auto;">{{ n.created_at[:10] }}</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;">{{ n.title[:50] }}{% if n.title|length > 50 %}…{% endif %}</div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:16px;font-size:12px;">No notices.</div>
+    {% endfor %}
+  </div>
+
+  <!-- UPCOMING EVENTS -->
+  <div class="card">
+    <div class="card-title">🗓️ Upcoming Events</div>
+    {% for e in events %}
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;">
+      <div style="background:var(--surface2);border-radius:8px;padding:5px 8px;text-align:center;min-width:40px;">
+        <div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'Syne',sans-serif;">{{ e.event_date[8:10] }}</div>
+        <div style="font-size:9px;color:var(--muted);">{{ e.event_date[5:7] }}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;">{{ e.title }}</div>
+        <div style="font-size:10px;color:var(--muted);">{{ e.type }} · {{ e.dept_name or 'General' }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:16px;font-size:12px;">No upcoming events.</div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

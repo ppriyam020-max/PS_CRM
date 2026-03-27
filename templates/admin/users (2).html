@@ -1,0 +1,69 @@
+{% extends "shared/base.html" %}
+{% block title %}Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-title">👥 All Users ({{ users|length }})</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City/Area</th><th>Complaints</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for u in users %}
+      <tr>
+        <td style="font-weight:500;">{{ u.name }}</td>
+        <td style="font-size:12px;color:var(--muted);">{{ u.email }}</td>
+        <td>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+            background:{% if u.role=='admin' %}rgba(239,68,68,.15){% elif u.role=='head' %}rgba(245,158,11,.15){% else %}rgba(0,212,170,.15){% endif %};
+            color:{% if u.role=='admin' %}var(--danger){% elif u.role=='head' %}var(--warn){% else %}var(--accent){% endif %};">
+            {{ u.role|title }}
+          </span>
+        </td>
+        <td style="font-size:12px;">{{ u.city }}{% if u.area %} · {{ u.area }}{% endif %}</td>
+        <td style="text-align:center;">{{ u.complaint_count }}</td>
+        <td style="font-size:11px;color:var(--muted);">{{ u.created_at[:10] }}</td>
+        <td>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;
+            background:{% if u.is_active %}rgba(0,212,170,.15){% else %}rgba(239,68,68,.15){% endif %};
+            color:{% if u.is_active %}var(--accent){% else %}var(--danger){% endif %};">
+            {% if u.is_active %}Active{% else %}Disabled{% endif %}
+          </span>
+        </td>
+        <td>
+          {% if u.id != session['user_id'] %}
+          <form method="POST" action="{{ url_for('admin.toggle_user', uid=u.id) }}">
+            <button type="submit" class="btn btn-outline btn-sm">
+              {% if u.is_active %}Disable{% else %}Enable{% endif %}
+            </button>
+          </form>
+          {% else %}
+          <span style="font-size:10px;color:var(--muted);">You</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

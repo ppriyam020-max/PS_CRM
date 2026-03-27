@@ -1,0 +1,70 @@
+{% extends "shared/base.html" %}
+{% block title %}Verification Queries{% endblock %}
+{% block page_title %}🔍 Verification Queries{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"           class="nav-item {% if request.endpoint=='head.dashboard'           %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"            class="nav-item {% if request.endpoint=='head.overview'            %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"         class="nav-item {% if request.endpoint=='head.departments'         %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"              class="nav-item {% if request.endpoint=='head.budget'              %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"              class="nav-item {% if request.endpoint=='head.labour'              %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"             class="nav-item {% if request.endpoint=='head.notices'             %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"            class="nav-item {% if request.endpoint=='head.calendar'            %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('head.verification_queries') }}" class="nav-item {% if 'quer' in request.endpoint               %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Queries</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="background:rgba(124,106,247,.08);border:1px solid rgba(124,106,247,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.7;">
+  <strong style="color:var(--accent3);">🔔 How it works:</strong>
+  Raise a query on any complaint → Citizens in the same area are <strong>auto-notified via inbox</strong> → They respond to verify the issue → You review responses here.
+</div>
+
+<div class="card">
+  <div class="card-title">🔍 All Verification Queries ({{ queries|length }})</div>
+  {% if queries %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Query</th><th>Complaint</th><th>Area</th><th>Responses</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for q in queries %}
+      <tr>
+        <td style="font-size:13px;font-weight:500;max-width:220px;">{{ q.question[:50] }}{% if q.question|length > 50 %}…{% endif %}</td>
+        <td style="font-size:12px;color:var(--muted);">{{ q.comp_title[:35] }}{% if q.comp_title and q.comp_title|length > 35 %}…{% endif %}</td>
+        <td style="font-size:12px;">📍 {{ q.area }}</td>
+        <td style="text-align:center;">
+          <span style="font-size:14px;font-weight:700;color:{% if q.response_count > 0 %}var(--accent){% else %}var(--muted){% endif %};">{{ q.response_count }}</span>
+        </td>
+        <td>
+          <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+            background:{% if q.status=='Open' %}rgba(0,212,170,.15){% else %}rgba(124,106,247,.15){% endif %};
+            color:{% if q.status=='Open' %}var(--accent){% else %}var(--accent3){% endif %};">
+            {{ q.status }}
+          </span>
+        </td>
+        <td style="font-size:11px;color:var(--muted);">{{ q.created_at[:10] }}</td>
+        <td style="display:flex;gap:6px;">
+          <a href="{{ url_for('head.query_detail', qid=q.id) }}" class="btn btn-outline btn-sm">View →</a>
+          {% if q.status=='Open' %}
+          <form method="POST" action="{{ url_for('head.close_query', qid=q.id) }}">
+            <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);">Close</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:var(--muted);">
+    <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+    <div>No verification queries raised yet.</div>
+    <div style="font-size:12px;margin-top:6px;">Go to <a href="{{ url_for('head.overview') }}">All Complaints</a> and raise a query on any complaint.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

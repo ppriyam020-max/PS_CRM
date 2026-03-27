@@ -1,0 +1,60 @@
+{% extends "shared/base.html" %}
+{% block title %}Notices{% endblock %}
+{% block page_title %}City Notices & Announcements{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item {% if request.endpoint=='citizen.open_queries' %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- TYPE FILTER TABS -->
+<div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;">
+  <a href="{{ url_for('citizen.notices') }}" class="btn {% if not filter_type %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All</a>
+  {% for t in ['General','Budget','Rules','Tender','Emergency','Forum'] %}
+  <a href="{{ url_for('citizen.notices') }}?type={{ t }}"
+     class="btn {% if filter_type==t %}btn-primary{% else %}btn-outline{% endif %} btn-sm"
+     style="{% if t=='Emergency' %}border-color:var(--danger);{% endif %}">
+    {% if t=='Emergency' %}🚨{% elif t=='Budget' %}💰{% elif t=='Rules' %}📜{% elif t=='Tender' %}📋{% elif t=='Forum' %}💬{% else %}📢{% endif %} {{ t }}
+  </a>
+  {% endfor %}
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px;">
+  {% for n in notices %}
+  <div class="card" style="border-left:4px solid {% if n.type=='Emergency' %}var(--danger){% elif n.type=='Budget' %}var(--accent){% elif n.type=='Tender' %}var(--warn){% else %}var(--accent3){% endif %};">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:10px;padding:2px 10px;border-radius:20px;font-weight:700;
+            background:{% if n.type=='Emergency' %}rgba(239,68,68,.15){% elif n.type=='Budget' %}rgba(0,212,170,.15){% elif n.type=='Tender' %}rgba(245,158,11,.15){% else %}rgba(124,106,247,.15){% endif %};
+            color:{% if n.type=='Emergency' %}var(--danger){% elif n.type=='Budget' %}var(--accent){% elif n.type=='Tender' %}var(--warn){% else %}var(--accent3){% endif %};">
+            {{ n.type }}
+          </span>
+          {% if n.dept_name %}<span style="font-size:10px;color:var(--muted);">{{ n.dept_name }}</span>{% endif %}
+        </div>
+        <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:8px;">{{ n.title }}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;">{{ n.content }}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px;">
+          Posted by <strong>{{ n.posted_by_name }}</strong> on {{ n.created_at[:10] }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;color:var(--muted);">
+    <div style="font-size:40px;margin-bottom:12px;">📭</div>
+    <div>No notices found.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

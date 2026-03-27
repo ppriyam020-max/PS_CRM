@@ -1,0 +1,269 @@
+{% extends "shared/base.html" %}
+{% block title %}File Complaint{% endblock %}
+{% block page_title %}File a New Complaint{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item {% if request.endpoint=='citizen.open_queries' %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="max-width:700px;">
+  <div class="card">
+    <div class="card-title">📋 Complaint Details</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;padding:10px 14px;background:var(--surface2);border-radius:8px;line-height:1.6;">
+      ℹ️ Your complaint will be reviewed by the department admin. You can track the status from <strong>My Complaints</strong>. Be as specific as possible for faster resolution.
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Complaint Title * <span style="color:var(--muted);font-size:10px;">(min 5 characters)</span></label>
+        <input type="text" name="title" class="form-control"
+               placeholder="e.g. Large pothole near Sector 14 main road"
+               value="{{ form_data.get('title','') }}" required>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          <select name="dept_id" class="form-control" required>
+            <option value="">Select Department</option>
+            {% for d in depts %}
+            <option value="{{ d.id }}" {% if form_data.get('dept_id')==d.id|string %}selected{% endif %}>
+              {{ d.icon }} {{ d.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select name="priority" class="form-control">
+            {% for p in ['Low','Medium','High','Critical'] %}
+            <option value="{{ p }}" {% if form_data.get('priority','Medium')==p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📍 Area / Location *</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+          <input type="text" name="area" id="areaInput" class="form-control"
+                 placeholder="e.g. Sector 14, near bus stop"
+                 value="{{ form_data.get('area', current_user.area or '') }}"
+                 style="flex:1;min-width:200px;">
+          <button type="button" onclick="getLocation()" id="locBtn"
+                  class="btn btn-outline" style="white-space:nowrap;padding:9px 14px;">
+            📡 Use My Location
+          </button>
+        </div>
+        <!-- Hidden lat/lng fields -->
+        <input type="hidden" name="lat" id="latInput" value="{{ form_data.get('lat','') }}">
+        <input type="hidden" name="lng" id="lngInput" value="{{ form_data.get('lng','') }}">
+        <div id="locStatus" style="font-size:11px;margin-top:6px;display:none;"></div>
+        <!-- Mini map preview -->
+        <div id="locMapWrap" style="display:none;margin-top:10px;border-radius:8px;
+             overflow:hidden;border:1px solid var(--border);height:160px;">
+          <div id="locMap" style="height:160px;"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Description * <span style="color:var(--muted);font-size:10px;">(min 10 characters)</span></label>
+        <textarea name="description" class="form-control" rows="5"
+                  placeholder="Describe the issue in detail. Include when it started, how it's affecting you, and any other relevant information..."
+                  required>{{ form_data.get('description','') }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📸 Attach Photo <span style="color:var(--muted);font-size:10px;">(optional · JPG/PNG/GIF · max 5MB)</span></label>
+        <input type="file" name="image" class="form-control" accept="image/*"
+               id="imageInput" onchange="previewImage(this)">
+        <div id="imagePreview" style="display:none;margin-top:10px;">
+          <img id="previewImg" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+          📤 Submit Complaint
+        </button>
+        <a href="{{ url_for('citizen.complaints') }}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ── IMAGE PREVIEW ────────────────────────────────────────────
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('imagePreview').style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// ── LIVE LOCATION ────────────────────────────────────────────
+let locMap = null;
+let locMarker = null;
+
+function getLocation() {
+  const btn    = document.getElementById('locBtn');
+  const status = document.getElementById('locStatus');
+
+  if (!navigator.geolocation) {
+    showLocStatus('❌ Geolocation is not supported by your browser.', 'danger');
+    return;
+  }
+
+  btn.textContent = '⏳ Detecting…';
+  btn.disabled = true;
+  showLocStatus('📡 Requesting your location…', 'info');
+
+  navigator.geolocation.getCurrentPosition(
+    pos => onLocationSuccess(pos, btn),
+    err => onLocationError(err, btn),
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
+
+function onLocationSuccess(pos, btn) {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const acc = Math.round(pos.coords.accuracy);
+
+  // Fill hidden fields
+  document.getElementById('latInput').value = lat.toFixed(6);
+  document.getElementById('lngInput').value = lng.toFixed(6);
+
+  // Reverse geocode using Nominatim (OpenStreetMap, free, no key)
+  showLocStatus('🔍 Looking up address…', 'info');
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    .then(r => r.json())
+    .then(data => {
+      const addr = data.address || {};
+      const area = [
+        addr.road || addr.pedestrian || '',
+        addr.suburb || addr.neighbourhood || addr.quarter || '',
+        addr.city_district || addr.district || '',
+        addr.city || addr.town || addr.village || '',
+      ].filter(Boolean).slice(0, 3).join(', ');
+
+      if (area) {
+        document.getElementById('areaInput').value = area;
+      }
+      showLocStatus(
+        `✅ Location set! Accuracy: ~${acc}m. Address auto-filled above.`,
+        'success'
+      );
+    })
+    .catch(() => {
+      showLocStatus(`✅ GPS coordinates captured (accuracy ~${acc}m). Please type your area name above.`, 'success');
+    });
+
+  // Show mini map
+  showMiniMap(lat, lng);
+
+  btn.textContent = '✅ Location Captured';
+  btn.disabled = false;
+  btn.style.borderColor = '#138808';
+  btn.style.color = '#138808';
+}
+
+function onLocationError(err, btn) {
+  btn.textContent = '📡 Use My Location';
+  btn.disabled = false;
+  const msgs = {
+    1: '❌ Permission denied. Please allow location access in your browser settings.',
+    2: '❌ Location unavailable. Try moving near a window or outdoors.',
+    3: '❌ Location request timed out. Please try again.',
+  };
+  showLocStatus(msgs[err.code] || '❌ Could not get location.', 'danger');
+}
+
+function showLocStatus(msg, type) {
+  const el = document.getElementById('locStatus');
+  const colors = {
+    success: '#1b5e20', danger: '#b71c1c', info: '#1a3a6b'
+  };
+  el.style.display = 'block';
+  el.style.color   = colors[type] || '#546e7a';
+  el.textContent   = msg;
+}
+
+function showMiniMap(lat, lng) {
+  document.getElementById('locMapWrap').style.display = 'block';
+
+  if (!locMap) {
+    locMap = L.map('locMap', { zoomControl: true, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(locMap);
+  }
+
+  locMap.setView([lat, lng], 16);
+
+  if (locMarker) locMap.removeLayer(locMarker);
+
+  // Custom red pin icon
+  const pinIcon = L.divIcon({
+    html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="38" viewBox="0 0 28 38">
+      <ellipse cx="14" cy="14" rx="14" ry="14" fill="#c62828" opacity=".95"/>
+      <polygon points="7,22 21,22 14,38" fill="#c62828" opacity=".95"/>
+      <circle cx="14" cy="14" r="6" fill="rgba(0,0,0,.25)"/>
+      <circle cx="11" cy="11" r="2.5" fill="rgba(255,255,255,.5)"/>
+    </svg>`,
+    className: '',
+    iconSize:   [28, 38],
+    iconAnchor: [14, 38],
+    popupAnchor:[0,  -38],
+  });
+
+  locMarker = L.marker([lat, lng], { icon: pinIcon })
+    .addTo(locMap)
+    .bindPopup('📍 Your complaint location')
+    .openPopup();
+
+  // Allow dragging pin to fine-tune location
+  locMarker.options.draggable = true;
+  locMarker.dragging && locMarker.dragging.enable();
+  locMarker.on('dragend', function(e) {
+    const pos = e.target.getLatLng();
+    document.getElementById('latInput').value = pos.lat.toFixed(6);
+    document.getElementById('lngInput').value = pos.lng.toFixed(6);
+    showLocStatus('📍 Location updated to dragged pin position.', 'success');
+  });
+
+  // Force map to render correctly inside hidden div
+  setTimeout(() => locMap.invalidateSize(), 100);
+}
+
+// ── PRE-FILL if form re-shown (validation failed) ─────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const lat = document.getElementById('latInput').value;
+  const lng = document.getElementById('lngInput').value;
+  if (lat && lng) {
+    showMiniMap(parseFloat(lat), parseFloat(lng));
+    document.getElementById('locBtn').textContent = '✅ Location Captured';
+    document.getElementById('locBtn').style.borderColor = '#138808';
+    document.getElementById('locBtn').style.color = '#138808';
+  }
+});
+</script>
+{% endblock %}

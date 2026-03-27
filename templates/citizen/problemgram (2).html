@@ -1,0 +1,66 @@
+{% extends "shared/base.html" %}
+{% block title %}Problemgram{% endblock %}
+{% block page_title %}Problemgram — City Updates{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item {% if request.endpoint=='citizen.open_queries' %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 260px;gap:20px;">
+<div>
+  <div style="background:rgba(124,106,247,.08);border:1px solid rgba(124,106,247,.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--muted);">
+    💬 <strong style="color:var(--accent3);">Read-only feed.</strong> Only admins can post here. This is the official city update channel.
+  </div>
+
+  {% for p in posts %}
+  <div class="card" style="margin-bottom:14px;{% if p.is_pinned %}border-color:var(--warn);{% endif %}">
+    {% if p.is_pinned %}
+    <div style="font-size:9px;color:var(--warn);font-weight:700;margin-bottom:8px;letter-spacing:1px;">📌 PINNED POST</div>
+    {% endif %}
+    <div style="font-size:15px;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:8px;">{{ p.title }}</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;">{{ p.content }}</div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--danger),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;">
+        {{ p.author[:2].upper() }}
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;">{{ p.author }}</div>
+        <div style="font-size:10px;color:var(--muted);">{{ p.dept_name or 'General' }} · {{ p.created_at[:10] }}</div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;color:var(--muted);">
+    <div style="font-size:40px;margin-bottom:12px;">💬</div>
+    <div>No posts yet from admins.</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- FILTER SIDEBAR -->
+<div>
+  <div class="card">
+    <div class="card-title" style="font-size:11px;">Filter by Department</div>
+    <a href="{{ url_for('citizen.problemgram') }}"
+       class="nav-item {% if not filter_dept %}active{% endif %}" style="font-size:12px;">🏙️ All Departments</a>
+    {% for d in depts %}
+    <a href="{{ url_for('citizen.problemgram') }}?dept_id={{ d.id }}"
+       class="nav-item {% if filter_dept==d.id|string %}active{% endif %}" style="font-size:12px;">
+      {{ d.icon }} {{ d.name }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

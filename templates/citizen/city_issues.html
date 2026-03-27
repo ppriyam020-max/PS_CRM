@@ -1,0 +1,58 @@
+{% extends "shared/base.html" %}
+{% block title %}City Issues{% endblock %}
+{% block page_title %}City-Wide Issues Feed{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"   class="nav-item {% if request.endpoint=='citizen.dashboard'   %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"  class="nav-item {% if 'complaint' in request.endpoint        %}active{% endif %}"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item {% if request.endpoint=='citizen.new_complaint' %}active{% endif %}"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"     class="nav-item {% if request.endpoint=='citizen.notices'     %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}" class="nav-item {% if request.endpoint=='citizen.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}" class="nav-item {% if request.endpoint=='citizen.city_issues' %}active{% endif %}"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item {% if request.endpoint=='citizen.open_queries' %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- FILTERS -->
+<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+  <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;">
+    <select name="dept_id" class="form-control" style="width:160px;">
+      <option value="">All Departments</option>
+      {% for d in depts %}<option value="{{ d.id }}" {% if filter_dept==d.id|string %}selected{% endif %}>{{ d.icon }} {{ d.name }}</option>{% endfor %}
+    </select>
+    <select name="priority" class="form-control" style="width:130px;">
+      <option value="">All Priority</option>
+      {% for p in ['Low','Medium','High','Critical'] %}<option value="{{ p }}" {% if filter_priority==p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('citizen.city_issues') }}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">🗺️ City Issues ({{ issues|length }} shown)
+    <span style="font-size:10px;color:var(--muted);margin-left:auto;">Anonymous · No personal data shown</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Issue</th><th>Department</th><th>Area</th><th>Priority</th><th>Status</th><th>Filed</th></tr></thead>
+      <tbody>
+      {% for i in issues %}
+      <tr>
+        <td style="font-size:13px;font-weight:500;max-width:250px;">{{ i.title[:55] }}{% if i.title|length > 55 %}…{% endif %}</td>
+        <td>{{ i.dept_icon }} {{ i.dept_name }}</td>
+        <td style="font-size:12px;color:var(--muted);">📍 {{ i.area or 'N/A' }}</td>
+        <td><span class="priority-{{ i.priority|lower }}">● {{ i.priority }}</span></td>
+        <td><span class="status status-{{ i.status|lower|replace(' ','-') }}">{{ i.status }}</span></td>
+        <td style="font-size:11px;color:var(--muted);">{{ i.created_at[:10] }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

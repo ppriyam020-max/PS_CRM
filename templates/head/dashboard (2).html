@@ -1,0 +1,231 @@
+{% extends "shared/base.html" %}
+{% block title %}Head Dashboard{% endblock %}
+{% block page_title %}Municipal Head — City Overview{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"    class="nav-item {% if request.endpoint=='head.dashboard'    %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"     class="nav-item {% if request.endpoint=='head.overview'     %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"  class="nav-item {% if request.endpoint=='head.departments'  %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"       class="nav-item {% if request.endpoint=='head.budget'       %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"       class="nav-item {% if request.endpoint=='head.labour'       %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"      class="nav-item {% if request.endpoint=='head.notices'      %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"     class="nav-item {% if request.endpoint=='head.calendar'     %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+</div>
+{% endblock %}
+{% block content %}
+
+<!-- TOP STATS ROW -->
+<div class="stats-grid">
+  <div class="stat-card" style="border-top:3px solid var(--danger);">
+    <div class="stat-val" style="color:var(--danger);">{{ stats.critical }}</div>
+    <div class="stat-label">Critical Issues</div>
+    <div class="stat-change down">Needs immediate attention</div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--warn);">
+    <div class="stat-val" style="color:var(--warn);">{{ stats.open_complaints }}</div>
+    <div class="stat-label">Open Complaints</div>
+    <div class="stat-change">of {{ stats.total_complaints }} total</div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--accent);">
+    <div class="stat-val" style="color:var(--accent);">{{ stats.resolved }}</div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-change up">
+      {% if stats.total_complaints > 0 %}{{ ((stats.resolved / stats.total_complaints)*100)|int }}% resolution rate{% endif %}
+    </div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--accent3);">
+    <div class="stat-val" style="color:var(--accent3);">{{ stats.total_citizens }}</div>
+    <div class="stat-label">Registered Citizens</div>
+    <div class="stat-change up">Active users</div>
+  </div>
+</div>
+
+<!-- SECOND STATS ROW -->
+<div class="stats-grid" style="margin-top:0;margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.total_labour }}</div>
+    <div class="stat-label">Total Labour Force</div>
+    <div class="stat-change down">{{ stats.absent_labour }} absent/on-leave</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">₹{{ "{:,.0f}".format(stats.total_budget/100000) }}L</div>
+    <div class="stat-label">Total Budget Allocated</div>
+    <div class="stat-change">FY 2025-26</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">₹{{ "{:,.0f}".format(stats.spent_budget/100000) }}L</div>
+    <div class="stat-label">Total Spent</div>
+    <div class="stat-change {% if stats.total_budget > 0 and (stats.spent_budget/stats.total_budget) > 0.8 %}down{% else %}up{% endif %}">
+      {% if stats.total_budget > 0 %}{{ ((stats.spent_budget/stats.total_budget)*100)|int }}% of budget used{% endif %}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.total_notices }}</div>
+    <div class="stat-label">Notices Posted</div>
+    <div class="stat-change"><a href="{{ url_for('head.notices') }}" style="color:var(--muted);font-size:11px;">Manage →</a></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- DEPARTMENT HEALTH -->
+  <div class="card">
+    <div class="card-title">🏛️ Department Health
+      <a href="{{ url_for('head.departments') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Full Report</a>
+    </div>
+    {% for d in dept_stats %}
+    {% set pct = ((d.resolved / d.total * 100)|int) if d.total > 0 else 0 %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">{{ d.icon }}</span>
+          <span style="font-size:13px;font-weight:600;">{{ d.name }}</span>
+          {% if d.critical > 0 %}
+          <span style="font-size:9px;background:rgba(239,68,68,.15);color:var(--danger);padding:2px 6px;border-radius:20px;font-weight:700;">{{ d.critical }} critical</span>
+          {% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--muted);">{{ d.open_c }} open · {{ d.resolved }} resolved</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden;">
+          <div style="height:8px;border-radius:4px;width:{{ pct }}%;max-width:100%;
+            background:{% if pct >= 70 %}var(--accent){% elif pct >= 40 %}var(--warn){% else %}var(--danger){% endif %};
+            transition:width .4s;"></div>
+        </div>
+        <span style="font-size:10px;color:var(--muted);min-width:30px;">{{ pct }}%</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- STATUS & PRIORITY BREAKDOWN -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <div class="card">
+      <div class="card-title">📊 Status Breakdown</div>
+      {% for s in status_breakdown %}
+      {% set color = 'var(--accent3)' if s.status=='Registered' else 'var(--warn)' if s.status=='In Progress' else 'var(--accent)' if s.status=='Resolved' else 'var(--danger)' %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:{{ color }};flex-shrink:0;"></div>
+        <div style="flex:1;font-size:12px;">{{ s.status }}</div>
+        <div style="font-size:16px;font-weight:700;color:{{ color }};">{{ s.cnt }}</div>
+        <div style="width:80px;height:6px;background:var(--border);border-radius:4px;overflow:hidden;">
+          {% set total = stats.total_complaints %}
+          <div style="height:6px;border-radius:4px;background:{{ color }};width:{{ ((s.cnt/total*100)|int) if total > 0 else 0 }}%;"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Priority Breakdown (Open)</div>
+      {% for p in priority_breakdown %}
+      {% set color = 'var(--danger)' if p.priority=='Critical' else 'var(--accent2)' if p.priority=='High' else 'var(--warn)' if p.priority=='Medium' else 'var(--muted)' %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:{{ color }};flex-shrink:0;"></div>
+        <div style="flex:1;font-size:12px;">{{ p.priority }}</div>
+        <div style="font-size:16px;font-weight:700;color:{{ color }};">{{ p.cnt }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+<div>
+  <!-- CRITICAL / HIGH COMPLAINTS -->
+  <div class="card">
+    <div class="card-title">🚨 Critical & High Priority Issues
+      <a href="{{ url_for('head.overview') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">All Issues</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Issue</th><th>Dept</th><th>Priority</th><th>Status</th><th>Filed</th></tr></thead>
+        <tbody>
+        {% for c in recent_critical %}
+        <tr>
+          <td style="color:var(--muted);font-size:11px;">#{{ c.id }}</td>
+          <td>
+            <div style="font-size:13px;font-weight:500;">{{ c.title[:42] }}{% if c.title|length > 42 %}…{% endif %}</div>
+            <div style="font-size:10px;color:var(--muted);">📍 {{ c.area }} · {{ c.citizen_name }}</div>
+          </td>
+          <td style="font-size:13px;">{{ c.dept_icon }} {{ c.dept_name }}</td>
+          <td><span class="priority-{{ c.priority|lower }}" style="font-weight:700;">{{ c.priority }}</span></td>
+          <td style="white-space:nowrap;"><span class="status status-{{ c.status|lower|replace(' ','-') }}">{{ c.status }}</span></td>
+          <td style="font-size:11px;color:var(--muted);">{{ c.created_at[:10] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--accent);padding:20px;">✅ No critical issues!</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;">
+
+  <!-- BUDGET BARS -->
+  <div class="card">
+    <div class="card-title">💰 Budget Usage
+      <a href="{{ url_for('head.budget') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Details</a>
+    </div>
+    {% for b in budget_summary %}
+    {% set pct = ((b.spent / b.allocated * 100)|int) if b.allocated > 0 else 0 %}
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;">{{ b.icon }} {{ b.name }}</span>
+        <span style="font-size:10px;color:var(--muted);">₹{{ "{:,.0f}".format(b.spent) }} / ₹{{ "{:,.0f}".format(b.allocated) }}</span>
+      </div>
+      <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden;">
+        <div style="height:8px;border-radius:4px;width:{{ pct }}%;max-width:100%;
+          background:{% if pct > 85 %}var(--danger){% elif pct > 65 %}var(--warn){% else %}var(--accent){% endif %};"></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;text-align:right;">{{ pct }}% used</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- LABOUR SUMMARY -->
+  <div class="card">
+    <div class="card-title">👷 Labour Summary
+      <a href="{{ url_for('head.labour') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Details</a>
+    </div>
+    {% for s in labour_summary %}
+    {% set color = 'var(--accent)' if s.status=='Active' else 'var(--danger)' if s.status=='Absent' else 'var(--warn)' if s.status=='On Leave' else 'var(--accent3)' %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:{{ color }};"></div>
+        <span style="font-size:12px;">{{ s.status }}</span>
+      </div>
+      <span style="font-size:16px;font-weight:700;color:{{ color }};">{{ s.cnt }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- UPCOMING EVENTS -->
+  <div class="card">
+    <div class="card-title">🗓️ Upcoming Events
+      <a href="{{ url_for('head.calendar') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">All</a>
+    </div>
+    {% for e in events %}
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="background:var(--surface2);border-radius:8px;padding:5px 9px;text-align:center;min-width:40px;flex-shrink:0;">
+        <div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'Syne',sans-serif;">{{ e.event_date[8:10] }}</div>
+        <div style="font-size:9px;color:var(--muted);">{{ e.event_date[5:7] }}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;">{{ e.title }}</div>
+        <div style="font-size:10px;color:var(--muted);">{{ e.type }} · {{ e.dept_name or 'All' }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:16px;font-size:12px;">No upcoming events.</div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}
