@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KISAN BANDHU - Smart Procurement & Queue Tracking</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet Geo Map CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+  <!-- =========================================================================
+       1. PUBLIC HEADER (Visible on Landing, Login, Register)
+       ========================================================================= -->
+  <header class="public-header">
+    <div class="container nav-container">
+      <div class="brand-logo" data-navigate="landing">
+        <span class="icon">🌾</span>
+        <span data-i18n="brand_title">किसान बंधु</span>
+      </div>
+      <ul class="nav-menu">
+        <li><a href="#hero" data-navigate="landing" class="active" data-i18n="nav_home">होम</a></li>
+        <li><a href="#features" data-navigate="landing" data-i18n="nav_features">विशेषताएं</a></li>
+        <li><a href="#how-it-works" data-navigate="landing" data-i18n="nav_how_it_works">यह कैसे काम करता है</a></li>
+        <li><a href="#ai-assistant" data-navigate="landing" data-i18n="nav_ai">AI सहायक</a></li>
+        <li><a href="#contact" data-navigate="landing" data-i18n="nav_contact">संपर्क</a></li>
+      </ul>
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <button class="ctrl-toggle-btn lang-btn active" data-lang="hi" onclick="setLanguage('hi')">🇮🇳 हिन्दी</button>
+        <button class="ctrl-toggle-btn lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 English</button>
+
+        <!-- Dark Mode Toggle -->
+        <button class="ctrl-toggle-btn theme-toggle-btn" onclick="toggleTheme()">🌙 Dark</button>
+
+        <button class="btn-login" data-navigate="login" data-i18n="btn_login">लॉगिन</button>
+        <button class="btn-primary" data-navigate="register" data-i18n="btn_register">रजिस्टर करें</button>
+      </div>
+    </div>
+  </header>
+
+   <!-- =========================================================================
+       2. LANDING PAGE VIEW
+       ========================================================================= -->
+  <div id="view-landing" class="view-panel">
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <!-- ============================================================
+     ANIMATED PHOTO SHOWCASE — FULL WIDTH (EDGE TO EDGE)
+     ============================================================ -->
+      <section class="showcase-section-full">
+        <div class="photo-showcase" id="photo-showcase">
+          <div class="showcase-track" id="showcase-track">
+            <div class="showcase-slide active">
+              <img src="farm.jpg" alt="Tractors carrying sugarcane">
+            </div>
+            <div class="showcase-slide">
+              <img src="bori.jpg" alt="Farmers completing a deal">
+            </div>
+            <div class="showcase-slide">
+              <img src="dadi.jpg" alt="Grain sacks warehouse">
+            </div>
+            <div class="showcase-slide">
+              <img src="farme.jpg" alt="Farmers discussing at mandi">
+            </div>
+          </div>
+          <button class="showcase-arrow showcase-prev" onclick="showcaseMove(-1)">‹</button>
+          <button class="showcase-arrow showcase-next" onclick="showcaseMove(1)">›</button>
+          <div class="showcase-dots" id="showcase-dots">
+            <span class="showcase-dot active" onclick="showcaseGoTo(0)"></span>
+            <span class="showcase-dot" onclick="showcaseGoTo(1)"></span>
+            <span class="showcase-dot" onclick="showcaseGoTo(2)"></span>
+            <span class="showcase-dot" onclick="showcaseGoTo(3)"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <h1 class="hero-title" data-i18n="hero_title">स्मार्ट फसल खरीद।<br>जीरो वेटिंग।</h1>
+          <p class="hero-subtitle" data-i18n="hero_sub">
+            अपनी फसल खरीद का स्लॉट बुक करें, लाइव कतार ट्रैक करें और तुरंत अपडेट पाएं। किसानों के लिए एक संपूर्ण डिजिटल
+            मंच।
+          </p>
+          <div class="hero-buttons">
+            <button class="btn-primary" data-navigate="book-slot" data-i18n="btn_book_slot">अपना स्लॉट बुक करें</button>
+            <button class="btn-secondary" data-navigate="farmer-dashboard" data-i18n="btn_explore_portal">पोर्टल
+              देखें</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" data-i18n="sec_features_title">किसानों के लिए सब कुछ 🌾</h2>
+          <p class="section-subtitle" data-i18n="sec_features_sub">फसल खरीद को सरल, पारदर्शी और तेज बनाना।</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card" data-navigate="book-slot" style="cursor:pointer;">
+            <div class="feature-icon-box">📅</div>
+            <h3 class="feature-title" data-i18n="feat1_title">स्मार्ट स्लॉट बुकिंग</h3>
+            <p class="feature-desc" data-i18n="feat1_desc">...</p>
+          </div>
+          <div class="feature-card" data-navigate="live-queue" style="cursor:pointer;">
+            <div class="feature-icon-box">⏱️</div>
+            <h3 class="feature-title" data-i18n="feat2_title">लाइव कतार ट्रैकिंग</h3>
+            <p class="feature-desc" data-i18n="feat2_desc">...</p>
+          </div>
+          <div class="feature-card" data-navigate="qr-pass" style="cursor:pointer;">
+            <div class="feature-icon-box">📱</div>
+            <h3 class="feature-title" data-i18n="feat3_title">QR-आधारित डिजिटल एंट्री</h3>
+            <p class="feature-desc" data-i18n="feat3_desc">...</p>
+          </div>
+          <div class="feature-card" data-navigate="notifications" style="cursor:pointer;">
+            <div class="feature-icon-box">🔔</div>
+            <h3 class="feature-title" data-i18n="feat4_title">तुरंत सूचनाएं (Alerts)</h3>
+            <p class="feature-desc" data-i18n="feat4_desc">...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section" id="how-it-works">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title" data-i18n="sec_how_title">यह कैसे काम करता है</h2>
+          <p class="section-subtitle" data-i18n="sec_how_sub">आसान और परेशानी मुक्त खरीद प्रक्रिया।</p>
+        </div>
+        <div class="how-it-works-steps">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h4 class="step-title" data-i18n="step1_title">रजिस्टर करें</h4>
+            <p class="step-desc" data-i18n="step1_desc">कुछ ही मिनटों में अपना किसान खाता बनाएं।</p>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h4 class="step-title" data-i18n="step2_title">स्लॉट चुनें</h4>
+            <p class="step-desc" data-i18n="step2_desc">मंडी केंद्र, फसल, तारीख और समय चुनें।</p>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h4 class="step-title" data-i18n="step3_title">QR कोड पाएं</h4>
+            <p class="step-desc" data-i18n="step3_desc">फोन पर अपना डिजिटल गेट पास प्राप्त करें।</p>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <h4 class="step-title" data-i18n="step4_title">फसल बेचें</h4>
+            <p class="step-desc" data-i18n="step4_desc">मंडी जाएं, QR दिखाएं और तुलाई कराएं।</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Assistant Banner Section -->
+    <section class="section" id="ai-assistant">
+      <div class="container">
+        <div class="ai-assistant-card">
+          <div>
+            <h3 style="font-size: 26px; font-weight: 800; color: var(--text-dark); margin-bottom: 12px;"
+              data-i18n="ai_title">
+              आपका AI किसान सहायक 🤖
+            </h3>
+            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 20px;"
+              data-i18n="ai_sub">
+              स्लॉट, जरूरी दस्तावेज, MSP भाव और कतार की जानकारी 24/7 अपनी भाषा में पूछें।
+            </p>
+            <div class="ai-chips">
+              <span class="ai-chip">Check My Slot</span>
+              <span class="ai-chip">Queue Status</span>
+              <span class="ai-chip">Documents Required</span>
+              <span class="ai-chip">Payment Status</span>
+            </div>
+          </div>
+          <div class="ai-chat-preview">
+            <div id="ai-chat-messages" style="height: 160px; overflow-y: auto; margin-bottom: 12px;">
+              <div class="ai-chat-msg" style="display: flex; gap: 10px;">
+                <div
+                  style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">
+                  🤖</div>
+                <div
+                  style="background: var(--input-bg); padding: 10px 14px; border-radius: 12px; font-size: 13px; color: var(--text-dark); border: 1px solid var(--border-color);">
+                  <strong>नमस्ते किसान भाई! 🌾</strong><br>मैं आपकी क्या सहायता कर सकता हूँ?
+                </div>
+              </div>
+            </div>
+            <div class="ai-chat-input-box">
+              <input type="text" id="ai-chat-input" placeholder="अपना सवाल यहाँ लिखें...">
+              <button id="ai-chat-send" style="color: var(--primary); font-size: 18px; font-weight: bold;">➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Public Footer -->
+    <footer class="public-footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <h3>🌾 <span data-i18n="brand_title">किसान बंधु</span></h3>
+            <p>Smart • Transparent • Farmer First</p>
+            <p style="color: #cbd5e1; margin-top: 12px; font-size: 13px;">
+              Empowering Indian farmers with cutting-edge digital queue management and transparent agricultural
+              procurement.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#hero" data-navigate="landing" data-i18n="nav_home">होम</a></li>
+              <li><a href="#features" data-navigate="landing" data-i18n="nav_features">विशेषताएं</a></li>
+              <li><a href="#how-it-works" data-navigate="landing" data-i18n="nav_how_it_works">यह कैसे काम करता है</a>
+              </li>
+              <li><a href="#" data-navigate="farmer-dashboard">Farmer Portal</a></li>
+              <li><a href="#" data-navigate="admin-dashboard">Admin Portal</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <ul>
+              <li><a href="#">Help Center</a></li>
+              <li><a href="#">Documents Guide</a></li>
+              <li><a href="#">FAQs</a></li>
+              <li><a href="#">Announcements</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Support</h4>
+            <ul>
+              <li style="color: #cbd5e1; font-size: 14px;">📞 8081052909</li>
+              <li style="color: #cbd5e1; font-size: 14px;">✉️ ppriyam020@gmail.com</li>
+              <li style="margin-top: 14px; font-size: 18px; display: flex; gap: 12px; color: #a7f3d0;">
+                <span>🌐</span><span>📱</span><span>💬</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          © 2026 Kisan Bandhu. All rights reserved. Government of Agricultural Welfare Initiative.
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =========================================================================
+       3. LOGIN VIEW
+       ========================================================================= -->
+  <div id="view-login" class="view-panel" style="display: none; padding: 40px 20px;">
+    <div class="auth-card-container">
+      <div class="auth-header">
+        <div class="brand-logo" style="justify-content: center;" data-navigate="landing">
+          <span>🌾</span> <span data-i18n="brand_title">किसान बंधु</span>
+        </div>
+        <h2 data-i18n="btn_login">लॉगिन</h2>
+      </div>
+
+      <!-- Login type tabs -->
+      <div class="filter-pills" style="margin-bottom:20px;">
+        <button type="button" id="tab-farmer-login" class="pill-btn active" onclick="switchLoginTab('farmer')">👨‍🌾
+          Farmer Login</button>
+        <button type="button" id="tab-admin-login" class="pill-btn" onclick="switchLoginTab('admin')">🛡️ Admin
+          Login</button>
+      </div>
+
+      <!-- FARMER LOGIN -->
+      <form id="form-login-farmer">
+        <div class="form-group">
+          <label class="form-label">Farmer ID / Mobile Number</label>
+          <input type="text" id="farmer-mobile-number" class="form-control"
+            placeholder="Farmer ID (e.g. #RB10240) or 10-digit mobile" required>
+        </div>
+        <button type="button" id="send-otp-farmer-btn" class="btn-primary"
+          style="width:100%;padding:12px;margin-top:8px;">Send OTP</button>
+        <div id="otp-section-farmer" style="display:none;margin-top:15px;">
+          <div class="form-group">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="farmer-otp" class="form-control" placeholder="6-digit OTP" maxlength="6"
+              inputmode="numeric">
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;padding:12px;">Verify OTP & Login</button>
+        </div>
+      </form>
+
+      <!-- ADMIN LOGIN (hidden by default) -->
+      <form id="form-login-admin" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Admin Mobile Number</label>
+          <input type="tel" id="admin-mobile-number" class="form-control" placeholder="Enter admin mobile number"
+            maxlength="10" required>
+        </div>
+        <button type="button" id="send-otp-admin-btn" class="btn-primary"
+          style="width:100%;padding:12px;margin-top:8px;">Send OTP</button>
+        <div id="otp-section-admin" style="display:none;margin-top:15px;">
+          <div class="form-group">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="admin-otp" class="form-control" placeholder="6-digit OTP" maxlength="6"
+              inputmode="numeric">
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;padding:12px;">Verify OTP & Login</button>
+        </div>
+      </form>
+
+      <p style="text-align:center;margin-top:24px;font-size:14px;color:var(--text-muted);" id="register-link-wrap">
+        New farmer? <a href="#" data-navigate="register" style="color: var(--primary); font-weight: 700;">Create an
+          account</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       4. REGISTER / CREATE ACCOUNT VIEW
+       ========================================================================= -->
+  <div id="view-register" class="view-panel" style="display: none; padding: 40px 20px;">
+    <div class="auth-card-container" style="max-width: 520px;">
+      <div class="auth-header">
+        <div class="brand-logo" style="justify-content: center;" data-navigate="landing">
+          <span>🌾</span> <span data-i18n="brand_title">किसान बंधु</span>
+        </div>
+        <h2 data-i18n="btn_register">रजिस्टर करें</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Join Kisan Bandhu today for smart
+          procurement</p>
+      </div>
+
+      <form id="form-register">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" placeholder="Enter full name" required value="Priyam prajapati">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" class="form-control" placeholder="Enter mobile number" required value="8081052909">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Village</label>
+          <input type="text" class="form-control" placeholder="Enter village" required value="Daurala">
+        </div>
+
+        <!-- STATE → DISTRICT → VILLAGE → PROCUREMENT CENTER -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">State</label>
+            <select class="form-control" id="state-select" required>
+              <option value="">Select State</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">District</label>
+            <select class="form-control" id="district-select" required disabled>
+              <option value="">First select State</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Village</label>
+            <select class="form-control" id="village-select" required disabled>
+              <option value="">First select District</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Procurement Center</label>
+            <select class="form-control" id="procurement-center-select" required disabled>
+              <option value="">First select Village</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CROP CATEGORY → CROP TYPE -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">Crop Category</label>
+            <select class="form-control" id="crop-category" required>
+              <option value="">Select Crop Category</option>
+              <option value="Cereals">Cereals</option>
+              <option value="Pulses">Pulses</option>
+              <option value="Oilseeds">Oilseeds</option>
+              <option value="Commercial">Commercial Crops</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Spices">Spices</option>
+              <option value="Fruits">Fruits</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Crop Type</label>
+            <select class="form-control" id="crop-type" required disabled>
+              <option value="">First select Crop Category</option>
+            </select>
+          </div>
+        </div>
+
+        </div>
+
+        <div style="text-align: center; margin-top: 12px;">
+          <button type="submit" class="btn-primary" style="width: 150px; padding: 10px 20px;" data-i18n="btn_register">
+            Register
+          </button>
+        </div>
+      </form>
+
+      <p style="text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted);">
+        Already have an account? <a href="#" data-navigate="login" style="color: var(--primary); font-weight: 700;"
+          data-i18n="btn_login">Login</a>
+      </p>
+    </div>
+  </div>
+  <!-- =========================================================================
+       5. MAIN APPLICATION SHELL (Farmer Dashboard & Internal Views)
+       ========================================================================= -->
+  <div class="app-layout" style="display: none;">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header" data-navigate="landing" style="cursor: pointer;">
+        <span>🌾</span>
+        <span data-i18n="brand_title">किसान बंधु</span>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-section-title">FARMER PORTAL</li>
+        <li><button data-navigate="farmer-dashboard" data-view="farmer-dashboard" class="active">📊 <span data-i18n="nav_home">Dashboard</span></button></li>
+        <li><button data-navigate="book-slot" data-view="book-slot">📅 <span data-i18n="qa_book_slot">Book Slot</span></button></li>
+        <li><button data-navigate="live-queue" data-view="live-queue">⏱️ <span data-i18n="qa_live_queue">Live Queue</span></button></li>
+        <li><button data-navigate="qr-pass" data-view="qr-pass">📱 <span data-i18n="qa_farmer_pass">QR Pass</span></button></li>
+        <li><button data-navigate="notifications" data-view="notifications">🔔 Notifications <span class="badge">2</span></button></li>
+
+        <li class="sidebar-section-title admin-section-title">ADMIN PANEL</li>
+        <li><button data-navigate="admin-dashboard" data-view="admin-dashboard">📈 Dashboard</button></li>
+        <li><button data-navigate="admin-users" data-view="admin-users">👥 Users & Roles</button></li>
+        <li><button data-navigate="admin-farmers" data-view="admin-farmers">👨‍🌾 Farmers</button></li>
+        <li><button data-navigate="admin-crops" data-view="admin-crops">🌾 Crops</button></li>
+        <li><button data-navigate="admin-centres" data-view="admin-centres">🏢 Procurement Centres</button></li>
+        <li><button data-navigate="admin-seasons" data-view="admin-seasons">🗓️ Seasons</button></li>
+        <li><button data-navigate="admin-schedules" data-view="admin-schedules">📋 Schedules</button></li>
+        <li><button data-navigate="admin-bookings" data-view="admin-bookings">🎫 Bookings</button></li>
+        <li><button data-navigate="admin-waiting" data-view="admin-waiting">⏳ Waiting List</button></li>
+        <li><button data-navigate="admin-procurement" data-view="admin-procurement">⚖️ Procurement Records</button></li>
+        <li><button data-navigate="admin-payments" data-view="admin-payments">💰 Payments</button></li>
+        <li><button data-navigate="admin-notifications" data-view="admin-notifications">🔔 Notifications</button></li>
+      </ul>
+      <div class="sidebar-footer">
+        <ul class="sidebar-menu">
+          <li><button data-navigate="landing">🚪 Logout</button></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="top-bar-welcome">
+          <h2><span data-i18n="dash_welcome">Welcome back</span>, Priyam Prajapati 🌾</h2>
+          <p>Farmer ID: #RB10240 • Meerut District</p>
+        </div>
+        <div class="top-bar-user">
+          <!-- Language & Theme inside App -->
+          <button class="ctrl-toggle-btn lang-btn active" data-lang="hi" onclick="setLanguage('hi')">🇮🇳
+            हिन्दी</button>
+          <button class="ctrl-toggle-btn lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 EN</button>
+          <button class="ctrl-toggle-btn theme-toggle-btn" onclick="toggleTheme()">🌙 Dark</button>
+
+          <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;"
+            data-navigate="landing">Website</button>
+          <div class="user-avatar">PP</div>
+        </div>
+      </div>
+
+      <!-- VIEW: Farmer Dashboard -->
+      <div id="view-farmer-dashboard" class="page-body view-panel">
+        <!-- 4 Metric Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span data-i18n="metric_token">Token Number</span>
+              <span>🎫</span>
+            </div>
+            <div class="metric-value">#1024</div>
+            <div class="metric-sub">Today</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span data-i18n="metric_queue">Queue Position</span>
+              <span>👥</span>
+            </div>
+            <div class="metric-value dynamic-queue-pos">12</div>
+            <div class="metric-sub">11 before you</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span data-i18n="metric_wait">Estimated Waiting Time</span>
+              <span>⏱️</span>
+            </div>
+            <div class="metric-value dynamic-queue-wait">25 mins</div>
+            <div class="metric-sub">At your center</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span data-i18n="metric_status">Booking Status</span>
+              <span>✅</span>
+            </div>
+            <div class="metric-value" style="color: var(--status-confirmed); font-size: 22px;"
+              data-i18n="metric_status_val">Confirmed</div>
+            <div class="metric-sub">Verified for Entry</div>
+          </div>
+        </div>
+
+        <!-- 2 Column Details -->
+        <div class="dashboard-grid-2">
+          <!-- Today's Procurement -->
+          <div class="card">
+            <div class="card-title">
+              <span data-i18n="todays_procurement">Today's Procurement</span>
+              <span class="badge-status badge-confirmed">● Active Slot</span>
+            </div>
+
+            <div class="procurement-details-list">
+
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="crop_label">Crop</span>
+                <span class="detail-val" id="live-crop">Wheat (Kanak)</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="center_label">Procurement Center</span>
+                <span class="detail-val" id="live-center">Meerut Central Mandi</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="date_label">Date</span>
+                <span class="detail-val" id="live-date">31 Aug 2026</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label" data-i18n="slot_time_label">Slot Time</span>
+                <span class="detail-val" id="live-slot-time">10:00 AM - 11:00 AM</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">Estimated Quantity</span>
+                <span class="detail-val" id="live-quantity">45 Quintals</span>
+              </div>
+
+              <div class="detail-row" style="border: none;">
+                <span class="detail-label">Status</span>
+                <span class="detail-val" id="live-status" style="color: var(--primary);">
+                  Confirmed
+                </span>
+              </div>
+
+            </div>
+          </div>
+          <!-- Get Directions Button -->
+          <div style="margin-top: 14px;">
+            <a href="https://www.google.com/maps/dir/?api=1&destination=28.9845,77.7064" target="_blank"
+              class="btn-secondary"
+              style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; padding: 10px; width: 100%; border-color: #86efac; color: var(--primary); font-weight: 600;">
+              <span>📍</span> <span data-i18n="btn_google_maps">View Mandi Route on Google Maps</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- QR Entry Pass Widget -->
+        <!-- QR Entry Pass Widget -->
+<div class="card">
+  <div class="card-title">
+    <span>Your QR Entry Pass</span>
+    <span style="font-size: 13px; color: var(--text-muted);">Token: #1024</span>
+  </div>
+
+ <div class="qr-box">
+  <div id="qrcode-dashboard">
+    
+  </div>
+</div>
+  </div>
+
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+    Show this QR pass at the entrance gate for instant gate pass generation.
+  </p>
+
+  <button
+    class="btn-primary"
+    style="width: 100%;"
+    data-navigate="qr-pass"
+    data-i18n="btn_view_full_pass"
+  >
+    View Full Screen Pass
+  </button>
+</div>
+
+      <!-- Quick Action Tiles -->
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-dark);"
+        data-i18n="quick_actions">Quick Actions</h3>
+      <div class="quick-actions-grid">
+        <div class="action-tile" data-navigate="book-slot">
+          <div class="action-tile-icon">➕</div>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;" data-i18n="qa_book_slot">Book New Slot</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Choose Mandi & Date</div>
+          </div>
+        </div>
+        <div class="action-tile" data-navigate="live-queue">
+          <div class="action-tile-icon">⏱️</div>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;" data-i18n="qa_live_queue">Live Queue</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Real-time status</div>
+          </div>
+        </div>
+        <div class="action-tile" data-navigate="notifications">
+          <div class="action-tile-icon">💳</div>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;" data-i18n="qa_payment">Payment Status</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Direct Bank Transfer</div>
+          </div>
+        </div>
+        <div class="action-tile" data-navigate="qr-pass">
+          <div class="action-tile-icon">👤</div>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;" data-i18n="qa_farmer_pass">Farmer Pass</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Digital ID & Token</div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <!-- VIEW: Book Procurement Slot -->
+  <div id="view-book-slot" class="page-body view-panel" style="display: none;">
+    <div class="card" style="max-width: 900px; margin: 0 auto;">
+      <div
+        style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+        <button data-navigate="farmer-dashboard" style="font-size: 18px;">←</button>
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--primary);" data-i18n="qa_book_slot">Book Procurement
+          Slot</h2>
+      </div>
+
+      <div class="booking-form-grid">
+        <!-- Left: Selectors & Map -->
+        <div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="crop_label">Select Crop</label>
+            <select class="form-control" id="booking-crop-select">
+              <option>Wheat (Kanak)</option>
+              <option>Paddy / Rice (Basmati)</option>
+              <option>Mustard (Sarson)</option>
+              <option>Maize (Makka)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="form-label" style="margin-bottom: 0;" data-i18n="center_label">Procurement Center
+                (Mandi)</label>
+              <span style="font-size: 11px; color: var(--primary); font-weight: 600;">📍 Click pin on map</span>
+            </div>
+            <select class="form-control" id="booking-mandi-select">
+              <option value="meerut">Meerut Central Mandi (Near Bypass)</option>
+              <option value="hapur">Hapur Grain Market (Railway Rd)</option>
+              <option value="ghaziabad">Ghaziabad APMC Center (Govindpuram)</option>
+              <option value="modinagar">Modinagar Sub-Center (Delhi Rd)</option>
+            </select>
+
+            <!-- Interactive Mandi Geo Map -->
+            <div id="mandi-map"
+              style="height: 190px; width: 100%; margin-top: 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); overflow: hidden;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="date_label">Select Date</label>
+            <input type="date" class="form-control" value="2026-08-31">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Estimated Load (Quintals)</label>
+            <input type="number" class="form-control" placeholder="e.g. 50" value="45">
+          </div>
+        </div>
+
+        <!-- Right: Available Slots -->
+        <div>
+          <label class="form-label">Available Slots</label>
+          <div class="slots-time-list">
+            <div class="slot-time-item" data-time="09:00 AM - 10:00 AM">
+              <span>🕒 09:00 AM - 10:00 AM</span>
+              <span class="badge-status badge-confirmed">Available</span>
+            </div>
+            <div class="slot-time-item selected" data-time="10:00 AM - 11:00 AM">
+              <span>🕒 10:00 AM - 11:00 AM</span>
+              <span class="badge-status badge-confirmed">Available</span>
+            </div>
+            <div class="slot-time-item" data-time="11:00 AM - 12:00 PM">
+              <span>🕒 11:00 AM - 12:00 PM</span>
+              <span class="badge-status badge-confirmed">Available</span>
+            </div>
+            <div class="slot-time-item" data-time="12:00 PM - 01:00 PM">
+              <span>🕒 12:00 PM - 01:00 PM</span>
+              <span class="badge-status badge-confirmed">Available</span>
+            </div>
+            <div class="slot-time-item" data-time="01:00 PM - 02:00 PM">
+              <span>🕒 01:00 PM - 02:00 PM</span>
+              <span class="badge-status badge-limited">Limited</span>
+            </div>
+          </div>
+
+          <button id="btn-confirm-booking" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 14px;"
+            data-i18n="btn_confirm_booking">
+            Confirm Booking
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW: Live Queue Tracking -->
+  <div id="view-live-queue" class="page-body view-panel" style="display: none;">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button data-navigate="farmer-dashboard" style="font-size: 18px;">←</button>
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--primary);" data-i18n="qa_live_queue">Live Queue
+            Tracking</h2>
+        </div>
+        <span style="font-size: 13px; color: var(--text-muted);">🔄 Auto-updating</span>
+      </div>
+
+      <div class="dashboard-grid-2">
+        <!-- Queue Status Box -->
+        <div class="card">
+          <h3 class="card-title">Your Queue Status</h3>
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 13px; color: var(--text-muted);" data-i18n="metric_token">Token Number</div>
+            <div style="font-size: 32px; font-weight: 800; color: var(--primary);">#1024</div>
+          </div>
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);" data-i18n="metric_queue">Current Position</div>
+              <div class="dynamic-queue-pos" style="font-size: 24px; font-weight: 700;">12</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">Total in Queue</div>
+              <div style="font-size: 24px; font-weight: 700;">45</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted);" data-i18n="metric_wait">Estimated Waiting Time</div>
+            <div class="dynamic-queue-wait" style="font-size: 24px; font-weight: 700; color: var(--accent-gold);">25
+              mins</div>
+          </div>
+        </div>
+
+        <!-- Queue Progress Visualizer -->
+        <div class="card">
+          <h3 class="card-title">Queue Progress</h3>
+          <p style="font-size: 13px; color: var(--text-muted);">You are in the queue. Please wait for your turn.</p>
+
+          <div class="queue-stepper">
+            <div class="queue-track">
+              <div class="queue-track-fill"></div>
+            </div>
+            <div class="queue-node">
+              <div class="queue-dot">1</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Start</div>
+            </div>
+            <div class="queue-node active">
+              <div class="queue-dot dynamic-queue-pos">12</div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--primary); margin-top: 4px;">You (12)</div>
+            </div>
+            <div class="queue-node">
+              <div class="queue-dot">45</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">End</div>
+            </div>
+          </div>
+
+          <div class="tip-banner">
+            <span>💡</span>
+            <span>Tip: You will receive an SMS and WhatsApp notification when your turn is next.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW: Full QR Pass -->
+  <div id="view-qr-pass" class="page-body view-panel" style="display: none;">
+    <div class="card" style="max-width: 480px; margin: 0 auto; text-align: center;">
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <div class="brand-logo">🌾 <span data-i18n="brand_title">किसान बंधु</span></div>
+        <button data-navigate="farmer-dashboard" style="font-size: 14px; color: var(--text-muted);">✕ Close</button>
+      </div>
+
+      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px;">Your QR Entry Pass</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Official Gate Verification Pass</p>
+<div style="display:flex; justify-content:center; margin-bottom:20px;">
+  <div class="qr-box">
+    <div id="qrcode-fullpass"></div>
+  </div>
+</div>
+      <div class="procurement-details-list" style="text-align: left; margin-bottom: 24px;">
+        <div class="detail-row">
+          <span class="detail-label" data-i18n="metric_token">Token Number</span>
+          <span class="detail-val qr-token"
+      style="color:var(--primary);font-size:16px;">
+    #1024
+</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label" data-i18n="crop_label">Crop</span>
+          <span class="detail-val qr-crop">Wheat</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label" data-i18n="center_label">Center</span>
+          <span class="detail-val qr-center">Meerut Central Mandi</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label" data-i18n="date_label">Date</span>
+          <span class="detail-val qr-date">31 Aug 2026</span>
+        </div>
+        <div class="detail-row" style="border: none;">
+          <span class="detail-label" data-i18n="slot_time_label">Slot Time</span>
+          <span class="detail-val qr-slot">10:00 AM - 11:00 AM</span>
+        </div>
+      </div>
+
+      <div class="tip-banner" style="justify-content: center; margin-bottom: 16px;">
+        <span>🛡️ Show this QR code at the center for quick entry</span>
+      </div>
+
+      <button class="btn-secondary" style="width: 100%;" onclick="window.print()">🖨️ Download / Print Pass</button>
+    </div>
+  </div>
+
+  <!-- VIEW: Notifications -->
+  <div id="view-notifications" class="page-body view-panel" style="display: none;">
+    <div class="card" style="max-width: 760px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--primary);">Notifications</h2>
+        <button style="font-size: 13px; color: var(--primary); font-weight: 600;"
+          onclick="alert('All notifications marked as read.')">Mark all as read</button>
+      </div>
+
+      <div class="filter-pills">
+        <button class="pill-btn active" data-filter="all" onclick="filterNotifications('all')">All</button>
+        <button class="pill-btn" data-filter="sms" onclick="filterNotifications('sms')">SMS</button>
+        <button class="pill-btn" data-filter="whatsapp" onclick="filterNotifications('whatsapp')">WhatsApp</button>
+        <button class="pill-btn" data-filter="system" onclick="filterNotifications('system')">System</button>
+      </div>
+
+      <div id="notifications-list"></div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       6. ADMIN PANEL - COMPLETE MANAGEMENT MODULES
+       ========================================================================= -->
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="view-admin-dashboard" class="page-body view-panel" style="display:none;">
+    <div class="admin-page-head">
+      <div>
+        <span class="admin-kicker">ADMIN CONTROL CENTER</span>
+        <h2>Admin Dashboard</h2>
+        <p>Procurement operations, farmers, schedules, bookings, payments and notifications in one place.</p>
+      </div>
+      <button class="btn-primary" data-admin-action="export">📥 Export Report</button>
+    </div>
+
+    <div id="admin-dashboard-metrics" class="admin-metrics-grid"></div>
+
+    <div class="admin-dashboard-grid">
+      <div class="card">
+        <div class="card-title"><span>Today's Schedules</span><button class="admin-link-btn" data-navigate="admin-schedules">View all →</button></div>
+        <div id="admin-today-schedules"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>Payment Summary</span><button class="admin-link-btn" data-navigate="admin-payments">Manage →</button></div>
+        <div id="admin-payment-summary"></div>
+      </div>
+    </div>
+
+    <div class="card admin-status-card">
+      <div class="card-title"><span>Operational Status</span><span class="admin-live-dot">● Live</span></div>
+      <div id="admin-status-summary" class="admin-status-grid"></div>
+    </div>
+  </div>
+
+  <!-- GENERIC ADMIN MODULE VIEWS -->
+  <div id="view-admin-users" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-users"></div>
+  </div>
+  <div id="view-admin-farmers" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-farmers"></div>
+  </div>
+  <div id="view-admin-crops" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-crops"></div>
+  </div>
+  <div id="view-admin-centres" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-centres"></div>
+  </div>
+  <div id="view-admin-seasons" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-seasons"></div>
+  </div>
+  <div id="view-admin-schedules" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-schedules"></div>
+  </div>
+  <div id="view-admin-bookings" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-bookings"></div>
+  </div>
+  <div id="view-admin-waiting" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-waiting"></div>
+  </div>
+  <div id="view-admin-procurement" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-procurement"></div>
+  </div>
+  <div id="view-admin-payments" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-payments"></div>
+  </div>
+  <div id="view-admin-notifications" class="page-body view-panel" style="display:none;">
+    <div id="admin-module-notifications"></div>
+  </div>
+
+  <!-- ADMIN FORM MODAL -->
+  <div id="admin-modal" class="admin-modal" aria-hidden="true">
+    <div class="admin-modal-backdrop" data-admin-action="close-modal"></div>
+    <div class="admin-modal-card">
+      <div class="admin-modal-head">
+        <div>
+          <span class="admin-kicker">ADMIN FORM</span>
+          <h3 id="admin-modal-title">Add Record</h3>
+        </div>
+        <button class="admin-modal-close" data-admin-action="close-modal">✕</button>
+      </div>
+      <form id="admin-record-form">
+        <div id="admin-modal-fields" class="admin-form-grid"></div>
+        <div class="admin-modal-actions">
+          <button type="button" class="btn-secondary" data-admin-action="close-modal">Cancel</button>
+          <button type="submit" class="btn-primary">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  </main>
+  </div>
+<script src="app.js"></script>
+</body>
+</html>
