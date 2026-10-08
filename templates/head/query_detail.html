@@ -1,0 +1,91 @@
+{% extends "shared/base.html" %}
+{% block title %}Query Detail{% endblock %}
+{% block page_title %}🔍 Verification Query #{{ query.id }}{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"           class="nav-item {% if request.endpoint=='head.dashboard'           %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"            class="nav-item {% if request.endpoint=='head.overview'            %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"         class="nav-item {% if request.endpoint=='head.departments'         %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"              class="nav-item {% if request.endpoint=='head.budget'              %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"              class="nav-item {% if request.endpoint=='head.labour'              %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"             class="nav-item {% if request.endpoint=='head.notices'             %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"            class="nav-item {% if request.endpoint=='head.calendar'            %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('head.verification_queries') }}" class="nav-item {% if 'quer' in request.endpoint               %}active{% endif %}"><span class="nav-icon">🔍</span> Verify Queries</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px;">
+  <a href="{{ url_for('head.verification_queries') }}" class="btn btn-outline btn-sm">← Back to Queries</a>
+</div>
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">
+<div>
+  <div class="card" style="margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
+      📋 Re: <strong>{{ query.comp_title }}</strong> · 📍 {{ query.area }}
+    </div>
+    <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:10px;">{{ query.question }}</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+        background:{% if query.status=='Open' %}rgba(0,212,170,.15){% else %}rgba(124,106,247,.15){% endif %};
+        color:{% if query.status=='Open' %}var(--accent){% else %}var(--accent3){% endif %};">{{ query.status }}</span>
+      <span style="font-size:11px;color:var(--muted);">Raised by {{ query.raised_by_name }} · {{ query.created_at[:10] }}</span>
+      {% if query.status=='Open' %}
+      <form method="POST" action="{{ url_for('head.close_query', qid=query.id) }}" style="margin-left:auto;">
+        <button class="btn btn-outline btn-sm">✓ Close Query</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💬 Citizen Responses ({{ responses|length }})</div>
+    {% if responses %}
+      {% for r in responses %}
+      <div style="padding:14px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(0,212,170,.2);
+            display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+            color:var(--accent);flex-shrink:0;">{{ r.citizen_name[:2].upper() }}</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <div>
+                <span style="font-size:12px;font-weight:600;">{{ r.citizen_name }}</span>
+                <span style="font-size:10px;color:var(--muted);margin-left:6px;">📍 {{ r.citizen_area or 'N/A' }}</span>
+              </div>
+              <span style="font-size:10px;color:var(--muted);">{{ r.created_at[:16] }}</span>
+            </div>
+            <div style="font-size:13px;line-height:1.7;background:var(--surface2);padding:10px 14px;border-radius:8px;">{{ r.response }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:30px;color:var(--muted);">
+        <div style="font-size:32px;margin-bottom:8px;">⏳</div>
+        <div>No responses yet. Citizens in <strong>{{ query.area }}</strong> have been notified.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <div class="card-title">📊 Query Stats</div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;">
+      <div><span style="color:var(--muted);font-size:11px;">Total Responses</span>
+        <div style="font-size:24px;font-weight:800;color:var(--accent);">{{ responses|length }}</div></div>
+      <div><span style="color:var(--muted);font-size:11px;">Area Notified</span>
+        <div style="font-weight:600;">📍 {{ query.area }}</div></div>
+      <div><span style="color:var(--muted);font-size:11px;">Status</span>
+        <div style="font-weight:600;">{{ query.status }}</div></div>
+      <div><span style="color:var(--muted);font-size:11px;">Raised On</span>
+        <div>{{ query.created_at[:10] }}</div></div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

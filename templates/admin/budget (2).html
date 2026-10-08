@@ -1,0 +1,88 @@
+{% extends "shared/base.html" %}
+{% block title %}Budget{% endblock %}
+{% block page_title %}Budget Management{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- SUMMARY CARDS -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+  {% for s in summary %}
+  {% set pct = ((s.spent / s.allocated * 100)|int) if s.allocated > 0 else 0 %}
+  <div class="stat-card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="font-size:18px;">{{ s.icon }}</span>
+      <div style="font-size:13px;font-weight:600;">{{ s.name }}</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);">Allocated</div>
+    <div style="font-size:16px;font-weight:700;color:var(--accent);">₹{{ "{:,.0f}".format(s.allocated) }}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;">Spent: ₹{{ "{:,.0f}".format(s.spent) }}</div>
+    <div style="margin-top:8px;height:5px;background:var(--border);border-radius:4px;overflow:hidden;">
+      <div style="height:5px;border-radius:4px;background:{% if pct>80 %}var(--danger){% elif pct>60 %}var(--warn){% else %}var(--accent){% endif %};width:{{ pct }}%;"></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px;">{{ pct }}% used</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+<div class="card">
+  <div class="card-title">📊 All Budget Entries ({{ entries|length }})</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dept</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th><th>By</th></tr></thead>
+      <tbody>
+      {% for e in entries %}
+      <tr>
+        <td>{{ e.dept_icon }} {{ e.dept_name }}</td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+          background:{% if e.type=='Allocated' %}rgba(0,212,170,.15){% elif e.type=='Spent' %}rgba(239,68,68,.15){% else %}rgba(245,158,11,.15){% endif %};
+          color:{% if e.type=='Allocated' %}var(--accent){% elif e.type=='Spent' %}var(--danger){% else %}var(--warn){% endif %};">
+          {{ e.type }}</span></td>
+        <td style="font-weight:600;">₹{{ "{:,.0f}".format(e.amount) }}</td>
+        <td style="font-size:12px;color:var(--muted);">{{ e.description or '—' }}</td>
+        <td style="font-size:11px;color:var(--muted);">{{ e.created_at[:10] }}</td>
+        <td style="font-size:11px;">{{ e.created_by_name }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">➕ Add Entry</div>
+  <form method="POST" action="{{ url_for('admin.add_budget') }}">
+    <div class="form-group"><label class="form-label">Department</label>
+      <select name="dept_id" class="form-control" required>
+        {% for d in depts %}<option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select name="type" class="form-control">
+        {% for t in ['Allocated','Spent','Returned'] %}<option>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" name="amount" class="form-control" step="0.01" required></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Add Entry</button>
+  </form>
+</div>
+</div>
+{% endblock %}

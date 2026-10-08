@@ -1,0 +1,89 @@
+{% extends "shared/base.html" %}
+{% block title %}Complaints{% endblock %}
+{% block page_title %}Complaints Management{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item active"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- FILTERS -->
+<div class="card" style="margin-bottom:20px;">
+  <form method="GET" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+    <div>
+      <label class="form-label">Status</label>
+      <select name="status" class="form-control" style="width:150px;">
+        <option value="">All Status</option>
+        {% for s in ['Registered','In Progress','Resolved','Rejected'] %}
+        <option value="{{ s }}" {% if filter_status==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Priority</label>
+      <select name="priority" class="form-control" style="width:140px;">
+        <option value="">All Priority</option>
+        {% for p in ['Low','Medium','High','Critical'] %}
+        <option value="{{ p }}" {% if filter_priority==p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Department</label>
+      <select name="dept_id" class="form-control" style="width:160px;">
+        <option value="">All Departments</option>
+        {% for d in depts %}
+        <option value="{{ d.id }}" {% if filter_dept==d.id|string %}selected{% endif %}>{{ d.icon }} {{ d.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">⚠️ Complaints ({{ complaints|length }} found)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Title</th><th>Citizen</th><th>Dept</th><th>Priority</th><th>Status</th><th>Date</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+      {% for c in complaints %}
+      <tr>
+        <td style="color:var(--muted);font-size:11px;">#{{ c.id }}</td>
+        <td>
+          <div style="font-size:13px;font-weight:500;">{{ c.title[:40] }}{% if c.title|length > 40 %}…{% endif %}</div>
+          <div style="font-size:10px;color:var(--muted);">📍 {{ c.area or 'N/A' }}</div>
+        </td>
+        <td style="font-size:12px;">{{ c.citizen_name }}</td>
+        <td>{{ c.dept_icon }} {{ c.dept_name }}</td>
+        <td><span class="priority-{{ c.priority|lower }}">● {{ c.priority }}</span></td>
+        <td style="white-space:nowrap;"><span class="status status-{{ c.status|lower|replace(' ','-') }}">{{ c.status }}</span></td>
+        <td style="font-size:11px;color:var(--muted);">{{ c.created_at[:10] }}</td>
+        <td><a href="{{ url_for('admin.complaint_detail', cid=c.id) }}" class="btn btn-outline btn-sm">→ View</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">No complaints found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

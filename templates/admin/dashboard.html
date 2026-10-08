@@ -1,0 +1,189 @@
+{% extends "shared/base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard — {{ current_user.city }}{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint=='admin.dashboard' %}active{% endif %}"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.analytics') }}" class="nav-item {% if request.endpoint=='admin.analytics' %}active{% endif %}"><span class="nav-icon">📊</span> Analytics</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints <span class="badge">{{ stats.open_complaints }}</span></a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.open_complaints }}</div>
+    <div class="stat-label">Open Complaints</div>
+    <div class="stat-change down">{{ stats.critical }} Critical</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.resolved_today }}</div>
+    <div class="stat-label">Resolved Today</div>
+    <div class="stat-change up">↑ Good progress</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.total_labour }}</div>
+    <div class="stat-label">Total Labour</div>
+    <div class="stat-change down">{{ stats.absent_labour }} Absent</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val">{{ stats.total_citizens }}</div>
+    <div class="stat-label">Registered Citizens</div>
+    <div class="stat-change up">Active users</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+<div>
+  <!-- RECENT COMPLAINTS -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">⚠️ Recent Complaints
+      <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">View All</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Title</th><th>Dept</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for c in recent_complaints %}
+        <tr>
+          <td style="color:var(--muted);font-size:11px;">#{{ c.id }}</td>
+          <td>
+            <div style="font-size:13px;font-weight:500;">{{ c.title[:45] }}{% if c.title|length > 45 %}…{% endif %}</div>
+            <div style="font-size:10px;color:var(--muted);">{{ c.citizen_name }} · {{ c.area }}</div>
+          </td>
+          <td><span style="font-size:13px;">{{ c.dept_icon }}</span> {{ c.dept_name }}</td>
+          <td><span class="priority-{{ c.priority|lower }}">{{ c.priority }}</span></td>
+          <td style="white-space:nowrap;"><span class="status status-{{ c.status|lower|replace(' ','-') }}">{{ c.status }}</span></td>
+          <td><a href="{{ url_for('admin.complaint_detail', cid=c.id) }}" class="btn btn-outline btn-sm">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DEPARTMENTS GRID -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">🏛️ Departments Overview
+      <a href="{{ url_for('admin.departments') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Details</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      {% for d in departments %}
+      <a href="{{ url_for('admin.complaints') }}?dept_id={{ d.id }}" style="text-decoration:none;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;transition:.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:22px;margin-bottom:6px;">{{ d.icon }}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">{{ d.name }}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;">{{ d.complaint_count }} complaints · {{ d.resolved_count or 0 }} resolved</div>
+          {% if d.complaint_count > 0 %}
+          <div style="margin-top:8px;height:4px;background:var(--border);border-radius:4px;">
+            <div style="height:4px;border-radius:4px;background:var(--accent);width:{{ ((d.resolved_count or 0) / d.complaint_count * 100)|int }}%;"></div>
+          </div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- BUDGET SUMMARY -->
+  <div class="card">
+    <div class="card-title">💰 Budget Overview
+      <a href="{{ url_for('admin.budget') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Full Details</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Department</th><th>Allocated</th><th>Spent</th><th>Remaining</th><th>Usage</th></tr></thead>
+        <tbody>
+        {% for b in budget %}
+        {% set remaining = b.allocated - b.spent %}
+        {% set pct = ((b.spent / b.allocated * 100)|int) if b.allocated > 0 else 0 %}
+        <tr>
+          <td>Dept {{ b.dept_id }}</td>
+          <td style="color:var(--accent);">₹{{ "{:,.0f}".format(b.allocated) }}</td>
+          <td style="color:var(--accent2);">₹{{ "{:,.0f}".format(b.spent) }}</td>
+          <td style="color:{% if remaining < 0 %}var(--danger){% else %}var(--text){% endif %};">₹{{ "{:,.0f}".format(remaining) }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;height:6px;background:var(--border);border-radius:4px;">
+                <div style="height:6px;border-radius:4px;background:{% if pct>80 %}var(--danger){% elif pct>60 %}var(--warn){% else %}var(--accent){% endif %};width:{{ pct }}%;"></div>
+              </div>
+              <span style="font-size:10px;color:var(--muted);">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT COLUMN -->
+<div>
+  <!-- NOTICES -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">📢 Recent Notices
+      <a href="{{ url_for('admin.notices') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">All</a>
+    </div>
+    {% for n in recent_notices %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:{% if n.type=='Emergency' %}rgba(239,68,68,.15){% elif n.type=='Budget' %}rgba(0,212,170,.15){% else %}rgba(124,106,247,.15){% endif %};color:{% if n.type=='Emergency' %}var(--danger){% elif n.type=='Budget' %}var(--accent){% else %}var(--accent3){% endif %};">{{ n.type }}</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;">{{ n.title }}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;">{{ n.created_at[:10] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- UPCOMING EVENTS -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">🗓️ Upcoming Events
+      <a href="{{ url_for('admin.calendar') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Calendar</a>
+    </div>
+    {% for e in events %}
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;">
+      <div style="background:var(--surface2);border-radius:8px;padding:6px 10px;text-align:center;min-width:44px;">
+        <div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'Syne',sans-serif;">{{ e.event_date[8:10] }}</div>
+        <div style="font-size:9px;color:var(--muted);">{{ e.event_date[5:7] }}/{{ e.event_date[:4] }}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;">{{ e.title }}</div>
+        <div style="font-size:10px;color:var(--muted);">{{ e.type }} · {{ e.dept_name or 'All Depts' }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- PROBLEMGRAM -->
+  <div class="card">
+    <div class="card-title">💬 Problemgram
+      <a href="{{ url_for('admin.problemgram') }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Manage</a>
+    </div>
+    {% for p in posts %}
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      {% if p.is_pinned %}<span style="font-size:9px;color:var(--warn);">📌 PINNED</span>{% endif %}
+      <div style="font-size:12px;font-weight:600;margin-top:2px;">{{ p.title[:50] }}{% if p.title|length > 50 %}…{% endif %}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;">{{ p.author }} · {{ p.dept_name }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "shared/base.html" %}
+{% block title %}Departments{% endblock %}
+{% block page_title %}Department Performance Report{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"    class="nav-item {% if request.endpoint=='head.dashboard'    %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"     class="nav-item {% if request.endpoint=='head.overview'     %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"  class="nav-item {% if request.endpoint=='head.departments'  %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"       class="nav-item {% if request.endpoint=='head.budget'       %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"       class="nav-item {% if request.endpoint=='head.labour'       %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"      class="nav-item {% if request.endpoint=='head.notices'      %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"     class="nav-item {% if request.endpoint=='head.calendar'     %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+</div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-title">🏛️ All Departments — Performance Snapshot</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Department</th><th>Complaints</th><th>Resolved</th><th>Open</th><th>Critical</th><th>Workers</th><th>Active</th><th>Spent</th><th>Resolution %</th></tr></thead>
+      <tbody>
+      {% for d in depts %}
+      {% set pct_raw = ((d.resolved / d.total_complaints * 100)|int) if d.total_complaints > 0 else 0 %}
+      {% set pct = [pct_raw, 100]|min %}
+      <tr>
+        <td style="font-size:15px;">{{ d.icon }} <strong>{{ d.name }}</strong></td>
+        <td style="text-align:center;">{{ d.total_complaints }}</td>
+        <td style="text-align:center;color:var(--accent);font-weight:600;">{{ d.resolved }}</td>
+        <td style="text-align:center;color:var(--warn);">{{ d.open_c }}</td>
+        <td style="text-align:center;color:{% if d.critical > 0 %}var(--danger){% else %}var(--muted){% endif %};font-weight:{% if d.critical > 0 %}700{% else %}400{% endif %};">{{ d.critical }}</td>
+        <td style="text-align:center;">{{ d.total_workers }}</td>
+        <td style="text-align:center;color:var(--accent);">{{ d.active_workers }}</td>
+        <td style="font-size:12px;">₹{{ "{:,.0f}".format(d.spent) }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:8px;background:var(--border);border-radius:4px;min-width:60px;overflow:hidden;">
+              <div style="height:8px;border-radius:4px;width:{{ pct }}%;max-width:100%;background:{% if pct>=70 %}#138808{% elif pct>=40 %}var(--warn){% else %}var(--danger){% endif %};transition:width .4s ease;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:600;min-width:32px;text-align:right;color:{% if pct>=70 %}#138808{% elif pct>=40 %}var(--warn){% else %}var(--danger){% endif %};">{{ pct }}%</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

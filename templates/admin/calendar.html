@@ -1,0 +1,75 @@
+{% extends "shared/base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block page_title %}Events Calendar{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+<div class="card">
+  <div class="card-title">🗓️ Upcoming Events ({{ events|length }})</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Title</th><th>Type</th><th>Department</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+      <tr>
+        <td style="font-weight:600;color:var(--accent);font-size:12px;">{{ e.event_date }}</td>
+        <td>
+          <div style="font-size:13px;font-weight:500;">{{ e.title }}</div>
+          {% if e.description %}<div style="font-size:10px;color:var(--muted);">{{ e.description[:60] }}</div>{% endif %}
+        </td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--muted);">{{ e.type }}</span></td>
+        <td style="font-size:12px;">{{ e.dept_name or 'All' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.delete_event', eid=e.id) }}" onsubmit="return confirm('Delete event?')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px;">No events scheduled.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">➕ Add Event</div>
+  <form method="POST" action="{{ url_for('admin.add_event') }}">
+    <div class="form-group"><label class="form-label">Title *</label><input type="text" name="title" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Date *</label><input type="date" name="event_date" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select name="type" class="form-control">
+        {% for t in ['Work','Inspection','Meeting','Holiday','Deadline'] %}<option>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Department</label>
+      <select name="dept_id" class="form-control">
+        <option value="">All Departments</option>
+        {% for d in depts %}<option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Add Event</button>
+  </form>
+</div>
+</div>
+{% endblock %}

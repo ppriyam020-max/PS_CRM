@@ -1,0 +1,67 @@
+{% extends "shared/base.html" %}
+{% block title %}Notices{% endblock %}
+{% block page_title %}Notices — Municipal Head{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"    class="nav-item {% if request.endpoint=='head.dashboard'    %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"     class="nav-item {% if request.endpoint=='head.overview'     %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"  class="nav-item {% if request.endpoint=='head.departments'  %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"       class="nav-item {% if request.endpoint=='head.budget'       %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"       class="nav-item {% if request.endpoint=='head.labour'       %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"      class="nav-item {% if request.endpoint=='head.notices'      %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"     class="nav-item {% if request.endpoint=='head.calendar'     %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+<div>
+  <div class="card">
+    <div class="card-title">📢 All Notices ({{ notices|length }})</div>
+    {% for n in notices %}
+    <div style="padding:14px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+          background:{% if n.type=='Emergency' %}rgba(239,68,68,.15){% elif n.type=='Budget' %}rgba(0,212,170,.15){% elif n.type=='Tender' %}rgba(245,158,11,.15){% else %}rgba(124,106,247,.15){% endif %};
+          color:{% if n.type=='Emergency' %}var(--danger){% elif n.type=='Budget' %}var(--accent){% elif n.type=='Tender' %}var(--warn){% else %}var(--accent3){% endif %};">{{ n.type }}</span>
+        {% if n.dept_name %}<span style="font-size:10px;color:var(--muted);">{{ n.dept_name }}</span>{% endif %}
+        <span style="font-size:10px;color:var(--muted);margin-left:auto;">{{ n.created_at[:10] }}</span>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;">{{ n.title }}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;">{{ n.content[:180] }}{% if n.content|length > 180 %}…{% endif %}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;">Posted by <strong>{{ n.posted_by_name }}</strong></div>
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:30px;">No notices yet.</div>
+    {% endfor %}
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="card-title">📢 Post Notice</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;padding:8px;background:var(--surface2);border-radius:6px;">
+      Posting as <strong style="color:var(--warn);">Municipal Head</strong> — visible to all citizens and admins.
+    </div>
+    <form method="POST" action="{{ url_for('head.add_notice') }}">
+      <div class="form-group"><label class="form-label">Title *</label><input type="text" name="title" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select name="type" class="form-control">
+          {% for t in ['General','Budget','Rules','Tender','Emergency','Forum'] %}<option>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Department (optional)</label>
+        <select name="dept_id" class="form-control">
+          <option value="">All Departments</option>
+          {% for d in depts %}<option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Content *</label><textarea name="content" class="form-control" rows="5" required></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">📢 Post Notice</button>
+    </form>
+  </div>
+</div>
+</div>
+{% endblock %}

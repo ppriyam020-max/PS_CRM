@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | PS-CRM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f0f4f8;--surface:#ffffff;--surface2:#e8eef5;--border:#c5d3e0;--accent:#1a3a6b;--accent2:#ff6600;--accent3:#1a3a6b;--warn:#f59e0b;--danger:#ef4444;--text:#1a1a2e;--muted:#546e7a;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;}
+    .left-panel{width:420px;min-width:420px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:48px 40px;}
+    .logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);letter-spacing:1px;}
+    .logo span{color:var(--accent2);}
+    .logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+    .form-area{margin-top:48px;flex:1;}
+    h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+    .subtitle{font-size:13px;color:var(--muted);margin-bottom:32px;}
+    .form-group{margin-bottom:18px;}
+    .form-label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;font-weight:500;}
+    .form-control{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:.2s;}
+    .form-control:focus{border-color:var(--accent);}
+    .form-control option{background:var(--surface);}
+    .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .role-card{padding:12px 8px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;transition:.2s;}
+    .role-card:hover{border-color:var(--accent);}
+    .role-card.selected{border-color:var(--accent);background:rgba(26,58,107,.08);}
+    .role-card input{display:none;}
+    .role-icon{font-size:22px;display:block;margin-bottom:5px;}
+    .role-name{font-size:11px;font-weight:600;color:var(--text);}
+    .role-desc{font-size:9px;color:var(--muted);margin-top:2px;}
+    .btn{width:100%;padding:12px;background:var(--accent);color:#f0f4f8;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;}
+    .btn:hover{background:#0f2548;}
+    .link{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
+    .link a{color:var(--accent);}
+    .flash{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+    .flash.danger {background:rgba(198,40,40,.08); border:1px solid rgba(198,40,40,.3); color:#b71c1c;}
+    .flash.success{background:rgba(19,136,8,.08);  border:1px solid rgba(19,136,8,.3);  color:#1b5e20;}
+    .flash.warning{background:rgba(230,81,0,.08);  border:1px solid rgba(230,81,0,.3);  color:#e65100;}
+    .flash.info   {background:rgba(26,58,107,.08); border:1px solid rgba(26,58,107,.3); color:#1a3a6b;}
+    .right-panel{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;position:relative;overflow:hidden;}
+    .right-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(26,58,107,.06) 0%,transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(26,58,107,.06) 0%,transparent 50%);}
+    .city-title{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--text);text-align:center;line-height:1.2;position:relative;}
+    .city-title span{color:var(--accent);}
+    .city-sub{font-size:14px;color:var(--muted);text-align:center;margin-top:12px;position:relative;}
+    .demo-box{margin-top:40px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;width:100%;max-width:380px;position:relative;}
+    .demo-title{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+    .demo-user{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+    .demo-user:last-child{border-bottom:none;}
+    .demo-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+    .da-admin{background:rgba(239,68,68,.2);color:var(--danger);}
+    .da-head{background:rgba(245,158,11,.2);color:var(--warn);}
+    .da-citizen{background:rgba(26,58,107,.2);color:var(--accent);}
+    .demo-info{flex:1;}
+    .demo-name{font-size:12px;font-weight:600;}
+    .demo-cred{font-size:10px;color:var(--muted);font-family:monospace;}
+  </style>
+</head>
+<body>
+<div class="left-panel">
+  <div>
+    <div class="logo">PS<span>-</span>CRM</div>
+    <div class="logo-sub">Public Services Platform</div>
+  </div>
+  <div class="form-area">
+    <h1>Welcome Back</h1>
+    <p class="subtitle">Sign in to your PS-CRM account</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="flash {{ category }}">
+      {% if category=='danger' %}❌{% elif category=='success' %}✅{% elif category=='warning' %}⚠️{% else %}ℹ️{% endif %}
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Select Your Role</label>
+        <div class="role-grid">
+          <label class="role-card" id="card-admin">
+            <input type="radio" name="role" value="admin" required>
+            <span class="role-icon">🔴</span>
+            <div class="role-name">Admin</div>
+            <div class="role-desc">Dept. Manager</div>
+          </label>
+          <label class="role-card" id="card-head">
+            <input type="radio" name="role" value="head" required>
+            <span class="role-icon">🟡</span>
+            <div class="role-name">Mun. Head</div>
+            <div class="role-desc">City Head</div>
+          </label>
+          <label class="role-card" id="card-citizen">
+            <input type="radio" name="role" value="citizen" required>
+            <span class="role-icon">🟢</span>
+            <div class="role-name">Citizen</div>
+            <div class="role-desc">Public User</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" id="emailInput" class="form-control"
+               placeholder="your@email.com" required
+               oninput="validateEmail(this)"
+               style="border-color:var(--border);">
+        <div id="emailError" style="font-size:11px;color:#b71c1c;margin-top:4px;display:none;">
+          ⚠️ Please enter a valid email address (e.g. name@domain.com)
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn">Sign In →</button>
+    </form>
+
+    <!-- Public Map Access -->
+    <div style="margin-top:16px;text-align:center;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;
+                  display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span>or</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+      <a href="/map" style="display:flex;align-items:center;justify-content:center;
+         gap:10px;padding:11px 16px;border-radius:8px;text-decoration:none;
+         background:rgba(26,58,107,.06);border:1px solid rgba(26,58,107,.2);
+         color:#1a3a6b;font-size:13px;font-weight:600;transition:.2s;"
+         onmouseover="this.style.background='rgba(26,58,107,.12)'"
+         onmouseout="this.style.background='rgba(26,58,107,.06)'">
+        <span style="font-size:18px;">🗺️</span>
+        <div style="text-align:left;">
+          <div style="font-weight:700;">View City Issues Map</div>
+          <div style="font-size:10px;color:var(--muted);font-weight:400;">
+            See live complaints · No login needed
+          </div>
+        </div>
+        <span style="margin-left:auto;font-size:12px;color:var(--muted);">→</span>
+      </a>
+    </div>
+
+    <div class="link">
+      Don't have an account? <a href="{{ url_for('register') }}">Register as Citizen</a>
+    </div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="city-title">
+    Manage Your<br><span>City Smarter</span>
+  </div>
+  <div class="city-sub">
+    Real-time issue tracking · Labour management<br>Notices · Complaints · Progress reports
+  </div>
+  <div class="demo-box">
+    <div class="demo-title">🔑 Demo Credentials</div>
+    <div class="demo-user">
+      <div class="demo-avatar da-admin">AK</div>
+      <div class="demo-info">
+        <div class="demo-name">Admin Kumar</div>
+        <div class="demo-cred">admin@pscrm.in · admin123</div>
+      </div>
+    </div>
+    <div class="demo-user">
+      <div class="demo-avatar da-head">YK</div>
+      <div class="demo-info">
+        <div class="demo-name">Yoshit Kumar (Head)</div>
+        <div class="demo-cred">head@pscrm.in · head123</div>
+      </div>
+    </div>
+    <div class="demo-user">
+      <div class="demo-avatar da-citizen">RS</div>
+      <div class="demo-info">
+        <div class="demo-name">Rahul Sharma (Citizen)</div>
+        <div class="demo-cred">citizen@pscrm.in · citizen123</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.role-card input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      inp.parentElement.classList.add('selected');
+    });
+  });
+
+  function validateEmail(input) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const errDiv = document.getElementById('emailError');
+    if (input.value.length > 3 && !emailRegex.test(input.value)) {
+      input.style.borderColor = '#c62828';
+      errDiv.style.display = 'block';
+    } else {
+      input.style.borderColor = '';
+      errDiv.style.display = 'none';
+    }
+  }
+
+  // Prevent submit if email invalid
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const email = document.getElementById('emailInput');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+      e.preventDefault();
+      email.style.borderColor = '#c62828';
+      document.getElementById('emailError').style.display = 'block';
+      email.focus();
+    }
+  });
+</script>
+</body>
+</html>

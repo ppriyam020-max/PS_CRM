@@ -1,0 +1,70 @@
+{% extends "shared/base.html" %}
+{% block title %}Labour Overview{% endblock %}
+{% block page_title %}City Labour Force Overview{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"    class="nav-item {% if request.endpoint=='head.dashboard'    %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"     class="nav-item {% if request.endpoint=='head.overview'     %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"  class="nav-item {% if request.endpoint=='head.departments'  %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"       class="nav-item {% if request.endpoint=='head.budget'       %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"       class="nav-item {% if request.endpoint=='head.labour'       %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"      class="nav-item {% if request.endpoint=='head.notices'      %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"     class="nav-item {% if request.endpoint=='head.calendar'     %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+  {% for d in dept_labour %}
+  <div class="card">
+    <div style="font-size:18px;margin-bottom:6px;">{{ d.icon }}</div>
+    <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:10px;">{{ d.name }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
+      <div style="background:rgba(0,212,170,.1);border-radius:6px;padding:6px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;color:var(--accent);">{{ d.active }}</div>
+        <div style="color:var(--muted);">Active</div>
+      </div>
+      <div style="background:rgba(239,68,68,.1);border-radius:6px;padding:6px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;color:var(--danger);">{{ d.absent }}</div>
+        <div style="color:var(--muted);">Absent</div>
+      </div>
+      <div style="background:rgba(245,158,11,.1);border-radius:6px;padding:6px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;color:var(--warn);">{{ d.on_leave }}</div>
+        <div style="color:var(--muted);">On Leave</div>
+      </div>
+      <div style="background:rgba(124,106,247,.1);border-radius:6px;padding:6px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;color:var(--accent3);">{{ d.vacant }}</div>
+        <div style="color:var(--muted);">Vacant</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:10px;color:var(--muted);text-align:center;">Total: {{ d.total }} workers</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-title">👷 All Workers</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Area</th><th>Status</th><th>Joined</th></tr></thead>
+      <tbody>
+      {% for w in workers %}
+      <tr>
+        <td style="font-weight:500;">{{ w.name }}</td>
+        <td style="font-size:12px;color:var(--muted);">{{ w.role }}</td>
+        <td>{{ w.dept_icon }} {{ w.dept_name }}</td>
+        <td style="font-size:12px;">{{ w.area or '—' }}</td>
+        <td><span style="font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;
+          background:{% if w.status=='Active' %}rgba(0,212,170,.15){% elif w.status=='Absent' %}rgba(239,68,68,.15){% elif w.status=='On Leave' %}rgba(245,158,11,.15){% else %}rgba(124,106,247,.15){% endif %};
+          color:{% if w.status=='Active' %}var(--accent){% elif w.status=='Absent' %}var(--danger){% elif w.status=='On Leave' %}var(--warn){% else %}var(--accent3){% endif %};">{{ w.status }}</span></td>
+        <td style="font-size:11px;color:var(--muted);">{{ w.joined_at }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "shared/base.html" %}
+{% block title %}Labour Management{% endblock %}
+{% block page_title %}Labour Management{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.departments') }}" class="nav-item {% if request.endpoint=='admin.departments' %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-item {% if 'complaint' in request.endpoint %}active{% endif %}"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}" class="nav-item {% if request.endpoint=='admin.labour' %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}" class="nav-item {% if request.endpoint=='admin.notices' %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}" class="nav-item {% if request.endpoint=='admin.budget' %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}" class="nav-item {% if request.endpoint=='admin.problemgram' %}active{% endif %}"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}" class="nav-item {% if request.endpoint=='admin.calendar' %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint=='admin.users' %}active{% endif %}"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block content %}
+<!-- STATS -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+  {% for s in lab_stats %}
+  <div class="stat-card">
+    <div class="stat-val">{{ s.count }}</div>
+    <div class="stat-label">{{ s.status }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+<div>
+  <!-- FILTERS -->
+  <form method="GET" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <select name="dept_id" class="form-control" style="width:160px;">
+      <option value="">All Departments</option>
+      {% for d in depts %}<option value="{{ d.id }}" {% if filter_dept==d.id|string %}selected{% endif %}>{{ d.icon }} {{ d.name }}</option>{% endfor %}
+    </select>
+    <select name="status" class="form-control" style="width:140px;">
+      <option value="">All Status</option>
+      {% for s in ['Active','Absent','On Leave','Vacant'] %}<option value="{{ s }}" {% if filter_status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('admin.labour') }}" class="btn btn-outline">Reset</a>
+  </form>
+
+  <div class="card">
+    <div class="card-title">👷 Workers ({{ workers|length }})</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Area</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for w in workers %}
+        <tr>
+          <td style="font-weight:500;">{{ w.name }}</td>
+          <td style="font-size:12px;color:var(--muted);">{{ w.role }}</td>
+          <td>{{ w.dept_icon }} {{ w.dept_name }}</td>
+          <td style="font-size:12px;">{{ w.area or '—' }}</td>
+          <td>
+            <span style="font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;
+              background:{% if w.status=='Active' %}rgba(0,212,170,.15){% elif w.status=='Absent' %}rgba(239,68,68,.15){% elif w.status=='On Leave' %}rgba(245,158,11,.15){% else %}rgba(124,106,247,.15){% endif %};
+              color:{% if w.status=='Active' %}var(--accent){% elif w.status=='Absent' %}var(--danger){% elif w.status=='On Leave' %}var(--warn){% else %}var(--accent3){% endif %};">
+              {{ w.status }}
+            </span>
+          </td>
+          <td style="display:flex;gap:6px;">
+            <form method="POST" action="{{ url_for('admin.update_labour_status', lid=w.id) }}" style="display:flex;gap:4px;">
+              <select name="status" class="form-control" style="padding:4px 8px;font-size:11px;width:110px;">
+                {% for s in ['Active','Absent','On Leave','Vacant'] %}
+                <option value="{{ s }}" {% if w.status==s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-outline btn-sm">✓</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.delete_labour', lid=w.id) }}" onsubmit="return confirm('Remove this worker?')">
+              <button type="submit" class="btn btn-danger btn-sm">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- ADD WORKER FORM -->
+<div>
+  <div class="card">
+    <div class="card-title">➕ Add Worker</div>
+    <form method="POST" action="{{ url_for('admin.add_labour') }}">
+      <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="name" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Role *</label><input type="text" name="role" class="form-control" placeholder="e.g. Plumber" required></div>
+      <div class="form-group"><label class="form-label">Department *</label>
+        <select name="dept_id" class="form-control" required>
+          {% for d in depts %}<option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Area</label><input type="text" name="area" class="form-control" placeholder="Sector 14"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          {% for s in ['Active','Absent','On Leave','Vacant'] %}<option>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Add Worker</button>
+    </form>
+  </div>
+</div>
+</div>
+{% endblock %}

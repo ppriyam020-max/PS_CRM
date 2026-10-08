@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PS-CRM — Delhi City Issues Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <style>
+    :root {
+      --bg:#f0f4f8;--surface:#ffffff;--surface2:#e8eef5;
+      --border:#c5d3e0;--accent:#1a3a6b;--accent2:#ff6600;
+      --accent3:#138808;--warn:#e65100;--danger:#c62828;
+      --text:#1a1a2e;--muted:#546e7a;
+    }
+    [data-theme="dark"] {
+      --bg:#0f1923;--surface:#152030;--surface2:#1c2d40;
+      --border:#253a52;--accent:#4a90d9;--accent2:#ff6600;
+      --accent3:#43a047;--warn:#fb8c00;--danger:#e53935;
+      --text:#dce8f5;--muted:#7a95b0;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text);
+           font-family:'DM Sans',sans-serif; min-height:100vh;
+           display:flex; flex-direction:column; }
+
+    /* ── TOP NAVBAR ─────────────────────────────────── */
+    .navbar {
+      background:#1a3a6b; border-bottom:3px solid #ff6600;
+      padding:12px 24px; display:flex; align-items:center; gap:16px;
+      flex-wrap:wrap; position:sticky; top:0; z-index:1000;
+    }
+    .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+            color:#ffffff; letter-spacing:1px; text-decoration:none; }
+    .logo span { color:var(--accent2); }
+    .nav-tag { font-size:11px; padding:3px 10px; border-radius:20px;
+               background:rgba(255,215,0,.15); color:#ffd700;
+               border:1px solid rgba(255,215,0,.25); font-weight:600; }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .nav-btn { padding:7px 14px; border-radius:8px; font-size:12px; font-weight:600;
+               border:1px solid var(--border); background:var(--surface2);
+               color:var(--text); cursor:pointer; text-decoration:none;
+               transition:.2s; }
+    .nav-btn:hover { border-color:var(--accent); color:#ffd700; }
+    .theme-btn { font-size:16px; cursor:pointer; padding:6px 10px; border-radius:6px;
+                 background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+                 color:#fff; }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    .page { display:flex; flex:1; height:calc(100vh - 57px); }
+
+    /* ── SIDEBAR PANEL ──────────────────────────────── */
+    .panel {
+      width:320px; min-width:320px; background:var(--surface);
+      border-right:1px solid var(--border); display:flex;
+      flex-direction:column; overflow-y:auto; z-index:500;
+    }
+    .panel-section { padding:16px; border-bottom:1px solid var(--border); }
+    .panel-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+                   margin-bottom:12px; }
+
+    /* ── STATS ──────────────────────────────────────── */
+    .stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .stat-box { background:var(--surface2); border-radius:10px; padding:10px 8px;
+                text-align:center; border:1px solid var(--border); cursor:pointer;
+                transition:.2s; }
+    .stat-box:hover, .stat-box.active { border-color:#ffd700; }
+    .stat-num { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
+    .stat-lbl { font-size:10px; color:var(--muted); margin-top:2px; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+
+    /* ── FILTERS ────────────────────────────────────── */
+    .filter-label { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:500; }
+    select.filter-ctrl, input.filter-ctrl {
+      width:100%; padding:8px 12px; background:var(--surface2);
+      border:1px solid var(--border); border-radius:8px; color:var(--text);
+      font-size:12px; outline:none; font-family:inherit; margin-bottom:10px;
+    }
+    select.filter-ctrl:focus, input.filter-ctrl:focus { border-color:#ffd700; }
+    select.filter-ctrl option { background:var(--surface); }
+    .filter-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .filter-btn { flex:1; padding:7px; border-radius:8px; font-size:11px;
+                  font-weight:700; border:none; cursor:pointer; transition:.2s; }
+    .filter-btn.apply { background:#1a3a6b; color:#fff; }
+    .filter-btn.apply:hover { background:#0f2548; }
+    .filter-btn.reset  { background:var(--surface2); color:var(--muted);
+                         border:1px solid var(--border); }
+    .filter-btn.reset:hover { border-color:var(--accent); color:#ffd700; }
+
+    /* ── LEGEND ─────────────────────────────────────── */
+    .legend-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .legend-pin { width:18px; height:22px; flex-shrink:0;
+                  display:flex; align-items:center; justify-content:center; }
+    .legend-text { font-size:12px; }
+    .legend-sub  { font-size:10px; color:var(--muted); }
+
+    /* ── COMPLAINT LIST ─────────────────────────────── */
+    .complaint-list { flex:1; overflow-y:auto; }
+    .complaint-item {
+      padding:12px 16px; border-bottom:1px solid var(--border);
+      cursor:pointer; transition:.15s;
+    }
+    .complaint-item:hover { background:var(--surface2); }
+    .complaint-item.active { background:rgba(0,212,170,.07);
+                              border-left:3px solid var(--accent); }
+    .ci-title { font-size:13px; font-weight:600; margin-bottom:3px; }
+    .ci-meta  { font-size:11px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; }
+    .ci-status { font-size:9px; padding:2px 7px; border-radius:20px;
+                 font-weight:700; text-transform:uppercase; }
+    .s-reg  { background:rgba(239,68,68,.15);  color:#ef4444; }
+    .s-prog { background:rgba(245,158,11,.15); color:#f59e0b; }
+    .s-res  { background:rgba(0,212,170,.15);  color:#00d4aa; }
+    .no-results { padding:40px 20px; text-align:center; color:var(--muted); }
+
+    /* ── MAP ────────────────────────────────────────── */
+    #map { flex:1; z-index:1; }
+
+    /* ── POPUP STYLE ────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background:var(--surface) !important;
+      border:1px solid var(--border) !important;
+      border-radius:12px !important;
+      box-shadow:0 8px 32px rgba(0,0,0,.5) !important;
+      color:var(--text) !important;
+      font-family:'DM Sans',sans-serif !important;
+    }
+    .leaflet-popup-tip { background:var(--surface) !important; }
+    .leaflet-popup-close-button { color:var(--muted) !important; font-size:18px !important; }
+    .popup-title  { font-family:'Syne',sans-serif; font-size:14px; font-weight:700;
+                    margin-bottom:6px; line-height:1.4; }
+    .popup-meta   { font-size:11px; color:var(--muted); margin-bottom:8px;
+                    display:flex; flex-wrap:wrap; gap:6px; }
+    .popup-desc   { font-size:12px; line-height:1.6; color:var(--text);
+                    background:rgba(255,255,255,.04); padding:8px 10px;
+                    border-radius:8px; margin-bottom:8px; }
+    .popup-badge  { font-size:9px; padding:3px 8px; border-radius:20px;
+                    font-weight:700; text-transform:uppercase; display:inline-block; }
+    .pb-red    { background:rgba(239,68,68,.2);  color:#ef4444; }
+    .pb-yellow { background:rgba(245,158,11,.2); color:#f59e0b; }
+    .pb-green  { background:rgba(0,212,170,.2);  color:#00d4aa; }
+    .popup-login { font-size:11px; color:var(--muted); margin-top:8px;
+                   padding-top:8px; border-top:1px solid var(--border); }
+    .popup-login a { color:#ffd700; }
+
+    /* ── MOBILE ─────────────────────────────────────── */
+    .mobile-toggle { display:none; position:fixed; bottom:20px; left:20px;
+                     z-index:999; background:var(--accent); color:#0d1117;
+                     border:none; border-radius:50%; width:48px; height:48px;
+                     font-size:20px; cursor:pointer; box-shadow:0 4px 16px rgba(0,212,170,.4); }
+    @media(max-width:768px) {
+      .panel { position:fixed; left:0; top:57px; bottom:0; transform:translateX(-100%);
+               transition:.3s; z-index:900; }
+      .panel.open { transform:translateX(0); }
+      .mobile-toggle { display:flex; align-items:center; justify-content:center; }
+    }
+
+    /* LEAFLET DARK OVERRIDE */
+    .leaflet-tile { filter:brightness(.85) saturate(.9); }
+    [data-theme="light"] .leaflet-tile { filter:none; }
+    .leaflet-control-attribution { background:var(--surface) !important;
+                                   color:var(--muted) !important; font-size:9px !important; }
+    .leaflet-control-zoom a { background:var(--surface) !important;
+                               color:var(--text) !important;
+                               border-color:var(--border) !important; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="logo">PS<span>-</span>CRM</a>
+  <span class="nav-tag">🗺️ Live City Map</span>
+  <span style="font-size:11px;color:var(--muted);">Delhi NCR · Public View</span>
+  <div class="nav-right">
+    <span id="pinCount" style="font-size:12px;color:var(--muted);"></span>
+    <a href="/login" class="nav-btn">🔐 Login</a>
+    <a href="/register" class="nav-btn" style="border-color:var(--accent);color:var(--accent);">📝 Register</a>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  </div>
+  <!-- Tricolour stripe -->
+  <div style="height:4px;background:linear-gradient(to right,#ff6600 33.3%,#ffffff 33.3% 66.6%,#138808 66.6%);"></div>
+</nav>
+
+<!-- PAGE BODY -->
+<div class="page">
+
+  <!-- LEFT PANEL -->
+  <aside class="panel" id="panel">
+
+    <!-- STATS -->
+    <div class="panel-section">
+      <div class="panel-title">📊 City Status</div>
+      <div class="stat-row">
+        <div class="stat-box" id="statRed" onclick="filterByStatus('Registered')" title="Filter: Open">
+          <div class="stat-num" style="color:#ef4444;" id="cntRed">{{ stats.open }}</div>
+          <div class="stat-lbl"><span class="dot" style="background:#ef4444;"></span>Open</div>
+        </div>
+        <div class="stat-box" id="statYellow" onclick="filterByStatus('In Progress')" title="Filter: In Progress">
+          <div class="stat-num" style="color:#f59e0b;" id="cntYellow">{{ stats.inprogress }}</div>
+          <div class="stat-lbl"><span class="dot" style="background:#f59e0b;"></span>Active</div>
+        </div>
+        <div class="stat-box" id="statGreen" onclick="filterByStatus('Resolved')" title="Filter: Resolved">
+          <div class="stat-num" style="color:#00d4aa;" id="cntGreen">{{ stats.resolved }}</div>
+          <div class="stat-lbl"><span class="dot" style="background:#00d4aa;"></span>Resolved</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;">
+        Click a card to filter map pins
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="panel-section">
+      <div class="panel-title">🔍 Filter Issues</div>
+      <div class="filter-label">Department</div>
+      <select class="filter-ctrl" id="fDept">
+        <option value="">All Departments</option>
+        {% for d in depts %}
+        <option value="{{ d.id }}">{{ d.icon }} {{ d.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="filter-label">Priority</div>
+      <select class="filter-ctrl" id="fPriority">
+        <option value="">All Priorities</option>
+        <option value="Critical">🔴 Critical</option>
+        <option value="High">🟠 High</option>
+        <option value="Medium">🟡 Medium</option>
+        <option value="Low">🟢 Low</option>
+      </select>
+      <div class="filter-label">Search Area</div>
+      <input class="filter-ctrl" type="text" id="fArea" placeholder="e.g. Sector 14, Dwarka…" oninput="applyFilters()">
+      <div class="filter-btns">
+        <button class="filter-btn apply" onclick="applyFilters()">Apply Filters</button>
+        <button class="filter-btn reset"  onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="panel-section">
+      <div class="panel-title">🗝️ Map Legend</div>
+      <div class="legend-row">
+        <div class="legend-pin">
+          <svg width="18" height="26" viewBox="0 0 18 26">
+            <ellipse cx="9" cy="9" rx="9" ry="9" fill="#ef4444"/>
+            <polygon points="5,15 13,15 9,26" fill="#ef4444"/>
+            <circle cx="9" cy="9" r="4" fill="rgba(0,0,0,.3)"/>
+          </svg>
+        </div>
+        <div><div class="legend-text">🔴 Open / Registered</div>
+          <div class="legend-sub">Complaint awaiting action</div></div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-pin">
+          <svg width="18" height="26" viewBox="0 0 18 26">
+            <ellipse cx="9" cy="9" rx="9" ry="9" fill="#f59e0b"/>
+            <polygon points="5,15 13,15 9,26" fill="#f59e0b"/>
+            <circle cx="9" cy="9" r="4" fill="rgba(0,0,0,.3)"/>
+          </svg>
+        </div>
+        <div><div class="legend-text">🟡 In Progress</div>
+          <div class="legend-sub">Work underway by department</div></div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-pin">
+          <svg width="18" height="26" viewBox="0 0 18 26">
+            <ellipse cx="9" cy="9" rx="9" ry="9" fill="#00d4aa"/>
+            <polygon points="5,15 13,15 9,26" fill="#00d4aa"/>
+            <circle cx="9" cy="9" r="4" fill="rgba(0,0,0,.3)"/>
+          </svg>
+        </div>
+        <div><div class="legend-text">🟢 Resolved</div>
+          <div class="legend-sub">Issue fixed and closed</div></div>
+      </div>
+    </div>
+
+    <!-- COMPLAINT LIST -->
+    <div style="padding:12px 16px 6px;border-bottom:1px solid var(--border);">
+      <div class="panel-title" style="margin-bottom:0;">📋 Issues <span id="listCount" style="color:var(--muted);font-size:11px;font-weight:400;"></span></div>
+    </div>
+    <div class="complaint-list" id="complaintList">
+      <div class="no-results">⏳ Loading…</div>
+    </div>
+
+  </aside>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+</div>
+
+<!-- MOBILE TOGGLE -->
+<button class="mobile-toggle" onclick="togglePanel()" id="mobileToggle">📋</button>
+
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ── THEME ──────────────────────────────────────────────────────
+const savedTheme = localStorage.getItem('pscrm-theme') || 'light';
+applyTheme(savedTheme);
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t==='light'?'🌙':'☀️';
+  localStorage.setItem('pscrm-theme', t);
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light');
+}
+
+// ── MAP INIT ────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [28.6139, 77.2090],  // Delhi
+  zoom: 12,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+// ── CUSTOM PIN ICONS ────────────────────────────────────────────
+function makeIcon(color) {
+  const colors = { red:'#ef4444', yellow:'#f59e0b', green:'#00d4aa' };
+  const c = colors[color] || '#ef4444';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="38" viewBox="0 0 28 38">
+    <ellipse cx="14" cy="14" rx="14" ry="14" fill="${c}" opacity=".95"/>
+    <polygon points="7,22 21,22 14,38" fill="${c}" opacity=".95"/>
+    <circle cx="14" cy="14" r="6" fill="rgba(0,0,0,.25)"/>
+    <circle cx="11" cy="11" r="2.5" fill="rgba(255,255,255,.5)"/>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize:   [28, 38],
+    iconAnchor: [14, 38],
+    popupAnchor:[0, -38],
+  });
+}
+
+const icons = {
+  red:    makeIcon('red'),
+  yellow: makeIcon('yellow'),
+  green:  makeIcon('green'),
+};
+
+// ── STATE ────────────────────────────────────────────────────────
+let allPins    = [];
+let markers    = [];
+let activeItem = null;
+let statusFilter = '';
+
+// ── LOAD PINS ────────────────────────────────────────────────────
+function loadPins(dept='', status='') {
+  let url = '/api/map-pins?';
+  if (dept)   url += `dept_id=${dept}&`;
+  if (status) url += `status=${encodeURIComponent(status)}&`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      allPins = data;
+      renderPins(data);
+    })
+    .catch(() => {});
+}
+
+function renderPins(pins) {
+  // clear existing
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  const priorityFilter = document.getElementById('fPriority').value;
+  const areaFilter     = document.getElementById('fArea').value.toLowerCase();
+
+  const filtered = pins.filter(p => {
+    if (priorityFilter && p.priority !== priorityFilter) return false;
+    if (areaFilter && !p.area.toLowerCase().includes(areaFilter)) return false;
+    return true;
+  });
+
+  filtered.forEach(p => {
+    const marker = L.marker([p.lat, p.lng], { icon: icons[p.color] });
+    const badgeCls = p.color==='red'?'pb-red':p.color==='yellow'?'pb-yellow':'pb-green';
+    const priColor = {Critical:'#ef4444',High:'#ff6b35',Medium:'#f59e0b',Low:'#7d8590'}[p.priority]||'#7d8590';
+
+    marker.bindPopup(`
+      <div style="min-width:240px;max-width:280px;">
+        <div class="popup-title">${p.icon} ${p.title}</div>
+        <div class="popup-meta">
+          <span class="popup-badge ${badgeCls}">${p.status}</span>
+          <span style="color:${priColor};font-size:10px;font-weight:700;">● ${p.priority}</span>
+          <span>📍 ${p.area||'—'}</span>
+        </div>
+        <div class="popup-desc">${p.desc||'No description provided.'}${p.desc&&p.desc.length>=120?'…':''}</div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
+          <span>🏛️ ${p.dept}</span>
+          <span>📅 ${p.date}</span>
+        </div>
+        <div class="popup-login">
+          🔐 <a href="/login">Login</a> to file a complaint or track updates
+        </div>
+      </div>
+    `, { maxWidth: 300 });
+
+    marker.on('click', () => highlightItem(p.id));
+    marker.pinData = p;
+    marker.addTo(map);
+    markers.push(marker);
+  });
+
+  updateList(filtered);
+  document.getElementById('pinCount').textContent = `${filtered.length} issues shown`;
+  document.getElementById('listCount').textContent = `(${filtered.length})`;
+}
+
+// ── COMPLAINT LIST ────────────────────────────────────────────────
+function updateList(pins) {
+  const list = document.getElementById('complaintList');
+  if (!pins.length) {
+    list.innerHTML = '<div class="no-results">🔍 No issues match your filters</div>';
+    return;
+  }
+  list.innerHTML = pins.map(p => {
+    const sCls = p.color==='red'?'s-reg':p.color==='yellow'?'s-prog':'s-res';
+    return `<div class="complaint-item" id="ci-${p.id}" onclick="flyToPin(${p.id})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+        <div class="ci-title">${p.icon} ${p.title.length>45?p.title.slice(0,45)+'…':p.title}</div>
+        <span class="ci-status ${sCls}">${p.status}</span>
+      </div>
+      <div class="ci-meta">
+        <span>📍 ${p.area||'—'}</span>
+        <span>🏛️ ${p.dept}</span>
+        <span>📅 ${p.date}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── FLY TO PIN ────────────────────────────────────────────────────
+function flyToPin(id) {
+  const marker = markers.find(m => m.pinData.id === id);
+  if (!marker) return;
+  map.flyTo(marker.getLatLng(), 15, { duration: 0.8 });
+  setTimeout(() => marker.openPopup(), 900);
+  highlightItem(id);
+  // close panel on mobile
+  if (window.innerWidth <= 768) togglePanel(false);
+}
+
+function highlightItem(id) {
+  document.querySelectorAll('.complaint-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`ci-${id}`);
+  if (el) { el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  activeItem = id;
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────
+function filterByStatus(s) {
+  statusFilter = statusFilter === s ? '' : s;
+  document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
+  if (statusFilter) {
+    const map2 = {Registered:'statRed','In Progress':'statYellow',Resolved:'statGreen'};
+    document.getElementById(map2[statusFilter])?.classList.add('active');
+  }
+  loadPins(document.getElementById('fDept').value, statusFilter);
+}
+
+function applyFilters() {
+  loadPins(document.getElementById('fDept').value, statusFilter);
+}
+
+function resetFilters() {
+  document.getElementById('fDept').value = '';
+  document.getElementById('fPriority').value = '';
+  document.getElementById('fArea').value = '';
+  document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
+  statusFilter = '';
+  loadPins();
+}
+
+// ── PANEL TOGGLE (mobile) ─────────────────────────────────────────
+function togglePanel(force) {
+  const p = document.getElementById('panel');
+  const open = force !== undefined ? force : !p.classList.contains('open');
+  p.classList.toggle('open', open);
+  document.getElementById('mobileToggle').textContent = open ? '✕' : '📋';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+loadPins();
+
+// Locate user button
+L.control.locate = function(opts) {
+  const btn = L.Control.extend({
+    onAdd: function() {
+      const b = L.DomUtil.create('button','nav-btn');
+      b.innerHTML = '📍';
+      b.title = 'Go to my location';
+      b.style.cssText = 'padding:6px 10px;font-size:15px;cursor:pointer;';
+      b.onclick = () => {
+        if (navigator.geolocation)
+          navigator.geolocation.getCurrentPosition(p =>
+            map.flyTo([p.coords.latitude,p.coords.longitude],15));
+      };
+      return b;
+    }
+  });
+  return new btn(opts);
+};
+L.control.locate({position:'topright'}).addTo(map);
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+{% extends "shared/base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}📊 Analytics & Charts{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">Overview</div>
+  <a href="{{ url_for('admin.dashboard') }}"    class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('admin.analytics') }}"    class="nav-item active"><span class="nav-icon">📊</span> Analytics</a>
+  <a href="{{ url_for('admin.departments') }}"  class="nav-item"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('admin.complaints') }}"   class="nav-item"><span class="nav-icon">⚠️</span> Complaints</a>
+  <a href="{{ url_for('admin.labour') }}"       class="nav-item"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('admin.notices') }}"      class="nav-item"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('admin.budget') }}"       class="nav-item"><span class="nav-icon">💰</span> Budget</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Communication</div>
+  <a href="{{ url_for('admin.problemgram') }}"  class="nav-item"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('admin.calendar') }}"     class="nav-item"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a href="{{ url_for('admin.users') }}"        class="nav-item"><span class="nav-icon">👥</span> Users</a>
+</div>
+{% endblock %}
+{% block extra_css %}
+<style>
+  .chart-section { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px; }
+  .chart-section-title { color:var(--accent); font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px; }
+</style>
+{% endblock %}
+{% block content %}
+
+<!-- KPI ROW -->
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card" style="border-top:3px solid var(--accent3);">
+    <div class="stat-val" style="color:var(--accent3);">{{ totals.complaints }}</div>
+    <div class="stat-label">Total Complaints</div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--accent);">
+    <div class="stat-val" style="color:var(--accent);">{{ totals.resolved }}</div>
+    <div class="stat-label">Resolved</div>
+    <div class="stat-change up">{{ ((totals.resolved/totals.complaints*100)|int) if totals.complaints > 0 else 0 }}% rate</div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--accent2);">
+    <div class="stat-val" style="color:var(--accent2);">{{ totals.citizens }}</div>
+    <div class="stat-label">Citizens</div>
+  </div>
+  <div class="stat-card" style="border-top:3px solid var(--warn);">
+    <div class="stat-val" style="color:var(--warn);">{{ totals.labour }}</div>
+    <div class="stat-label">Labour Force</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- COMPLAINTS PER DEPT — Horizontal bar chart (SVG) -->
+  <div class="chart-section">
+    <div class="chart-section-title">🏛️ Complaints by Department</div>
+    {% set max_val = dept_data|map(attribute='total')|max %}
+    {% for d in dept_data %}
+    {% set bar_pct = ((d.total / max_val * 100)|int) if max_val > 0 else 0 %}
+    {% set res_pct = ((d.resolved / d.total * 100)|int) if d.total > 0 else 0 %}
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="font-size:12px;font-weight:500;">{{ d.icon }} {{ d.name }}</span>
+        <span style="font-size:11px;color:var(--muted);">{{ d.total }} total · {{ d.resolved }} resolved</span>
+      </div>
+      <div style="position:relative;height:18px;background:var(--border);border-radius:4px;overflow:hidden;overflow:hidden;">
+        <!-- Total bar -->
+        <div style="position:absolute;top:0;left:0;height:100%;width:{{ bar_pct }}%;
+          background:linear-gradient(90deg,#1a3a6b,#4a90d9);border-radius:4px;opacity:.4;"></div>
+        <!-- Resolved bar -->
+        <div style="position:absolute;top:0;left:0;height:100%;width:{{ ((d.resolved/max_val*100)|int) if max_val > 0 else 0 }}%;
+          background:#138808;border-radius:4px;"></div>
+        <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
+          font-size:10px;font-weight:700;color:var(--text);">{{ res_pct }}% done</span>
+      </div>
+    </div>
+    {% endfor %}
+    <!-- Legend -->
+    <div style="display:flex;gap:16px;margin-top:10px;font-size:10px;color:var(--muted);">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:6px;background:var(--accent);border-radius:2px;display:inline-block;"></span>Resolved</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:6px;background:var(--accent3);border-radius:2px;display:inline-block;opacity:.4;"></span>Total</span>
+    </div>
+  </div>
+
+  <!-- STATUS DONUT (SVG) -->
+  <div class="chart-section">
+    <div class="chart-section-title">📊 Complaints by Status</div>
+    {% set s_colors = {'Registered':'#1a3a6b','In Progress':'#e65100','Resolved':'#138808','Rejected':'#c62828'} %}
+    {% set total_s = status_data|sum(attribute='cnt') %}
+    <!-- SVG Donut -->
+    <div class="donut-wrap">
+      <svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0;">
+        {% set cx = 60 %} {% set cy = 60 %} {% set r = 44 %} {% set stroke = 18 %}
+        {% set circumference = 276.46 %}
+        {% set offset = namespace(val=0) %}
+        {% for s in status_data %}
+        {% set pct_raw = (s.cnt / total_s) if total_s > 0 else 0 %}
+      {% set pct = [pct_raw, 100]|min %}
+        {% set dash = pct * circumference %}
+        {% set color = s_colors.get(s.status, '#7d8590') %}
+        <circle cx="{{ cx }}" cy="{{ cy }}" r="{{ r }}"
+          fill="none" stroke="{{ color }}" stroke-width="{{ stroke }}"
+          stroke-dasharray="{{ dash }} {{ circumference - dash }}"
+          stroke-dashoffset="{{ circumference * 0.25 - offset.val }}"
+          transform="rotate(-90 {{ cx }} {{ cy }})"
+          style="transition:stroke-dashoffset .4s;"/>
+        {% set offset.val = offset.val + dash %}
+        {% endfor %}
+        <text x="{{ cx }}" y="{{ cy - 4 }}" text-anchor="middle"
+          font-size="16" font-weight="800" fill="var(--text)" font-family="Syne,sans-serif">{{ total_s }}</text>
+        <text x="{{ cx }}" y="{{ cy + 12 }}" text-anchor="middle"
+          font-size="9" fill="var(--muted)">total</text>
+      </svg>
+      <div class="donut-legend">
+        {% for s in status_data %}
+        {% set color = s_colors.get(s.status, '#7d8590') %}
+        <div class="donut-leg-item">
+          <div class="donut-dot" style="background:{{ color }};"></div>
+          <div>
+            <div style="font-weight:600;">{{ s.status }}</div>
+            <div style="font-size:10px;color:var(--muted);">{{ s.cnt }} · {{ ((s.cnt/total_s*100)|int) if total_s > 0 else 0 }}%</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- PRIORITY BAR CHART (vertical SVG bars) -->
+  <div class="chart-section">
+    <div class="chart-section-title">⚡ Complaints by Priority</div>
+    {% set p_colors = {'Low':'#546e7a','Medium':'#e65100','High':'#ff6600','Critical':'#c62828'} %}
+    {% set max_p = priority_data|map(attribute='cnt')|max if priority_data else 1 %}
+    <div class="chart-bar-wrap">
+      {% for p in priority_data %}
+      {% set h = ((p.cnt / max_p * 100)|int) if max_p > 0 else 0 %}
+      {% set color = p_colors.get(p.priority, '#7d8590') %}
+      <div class="chart-bar-col">
+        <div class="chart-bar" style="height:{{ h }}%;background:{{ color }};">
+          <div class="chart-tooltip">{{ p.cnt }}</div>
+        </div>
+        <div class="chart-label">{{ p.priority[:4] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- BUDGET UTILISATION BARS -->
+  <div class="chart-section">
+    <div class="chart-section-title">💰 Budget Utilisation %</div>
+    {% for b in budget_data %}
+    {% set pct = ((b.spent / b.allocated * 100)|int) if b.allocated > 0 else 0 %}
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;">{{ b.icon }} {{ b.name }}</span>
+        <span style="font-size:11px;font-weight:700;
+          color:{% if pct > 85 %}var(--danger){% elif pct > 65 %}var(--warn){% else %}var(--accent){% endif %};">
+          {{ pct }}%
+        </span>
+      </div>
+      <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;border-radius:5px;width:{{ [pct,100]|min }}%;
+          background:{% if pct > 85 %}var(--danger){% elif pct > 65 %}var(--warn){% else %}var(--accent){% endif %};
+          transition:width .5s ease;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px;">
+        <span>₹{{ "{:,.0f}".format(b.spent) }} spent</span>
+        <span>₹{{ "{:,.0f}".format(b.allocated) }} allocated</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- LABOUR BY DEPT -->
+<div class="chart-section">
+  <div class="chart-section-title">👷 Labour Force by Department</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+    {% for l in labour_dept %}
+    {% set pct = ((l.active / l.total * 100)|int) if l.total > 0 else 0 %}
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:4px;">{{ l.icon }}</div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:10px;">{{ l.name }}</div>
+      <!-- Mini SVG donut -->
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        {% set c2 = 32 %} {% set r2 = 24 %} {% set circ2 = 150.8 %}
+        <circle cx="{{ c2 }}" cy="{{ c2 }}" r="{{ r2 }}" fill="none"
+          stroke="var(--border)" stroke-width="10"/>
+        <circle cx="{{ c2 }}" cy="{{ c2 }}" r="{{ r2 }}" fill="none"
+          stroke="#138808" stroke-width="10"
+          stroke-dasharray="{{ pct * circ2 / 100 }} {{ circ2 }}"
+          stroke-dashoffset="{{ circ2 * 0.25 }}"
+          transform="rotate(-90 {{ c2 }} {{ c2 }})"/>
+        <text x="{{ c2 }}" y="{{ c2 + 4 }}" text-anchor="middle"
+          font-size="11" font-weight="800" fill="var(--text)">{{ l.active }}</text>
+      </svg>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;">{{ l.active }}/{{ l.total }} active</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "shared/base.html" %}
+{% block title %}Verify Nearby Complaints{% endblock %}
+{% block page_title %}🔔 Verification Queries Near You{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">My Account</div>
+  <a href="{{ url_for('citizen.dashboard') }}"    class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a href="{{ url_for('citizen.complaints') }}"   class="nav-item"><span class="nav-icon">📋</span> My Complaints</a>
+  <a href="{{ url_for('citizen.new_complaint') }}" class="nav-item"><span class="nav-icon">➕</span> File Complaint</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">City Info</div>
+  <a href="{{ url_for('citizen.notices') }}"      class="nav-item"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('citizen.problemgram') }}"  class="nav-item"><span class="nav-icon">💬</span> Problemgram</a>
+  <a href="{{ url_for('citizen.city_issues') }}"  class="nav-item"><span class="nav-icon">🗺️</span> City Issues</a>
+  <a href="{{ url_for('citizen.open_queries') }}" class="nav-item active"><span class="nav-icon">🔍</span> Verify Nearby</a>
+</div>
+{% endblock %}
+{% block content %}
+<div style="background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.7;">
+  <strong style="color:var(--accent);">🔔 Your civic duty!</strong>
+  The Municipal Head has raised verification queries about complaints in your area.
+  Your response helps confirm whether an issue is real and speeds up resolution.
+</div>
+
+{% if queries %}
+  {% for q in queries %}
+  <div class="card" style="margin-bottom:16px;{% if q.already_responded %}border-color:rgba(0,212,170,.3);{% endif %}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+          🏛️ Municipal Head Query · 📍 {{ q.area }} · {{ q.created_at[:10] }}
+        </div>
+        <div style="font-size:15px;font-weight:700;font-family:'Syne',sans-serif;margin-bottom:6px;">{{ q.question }}</div>
+        <div style="font-size:12px;color:var(--muted);">
+          Re complaint: <em>{{ q.comp_title }}</em>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+          {{ q.response_count }} citizen{{ 's' if q.response_count != 1 }} have responded
+        </div>
+      </div>
+      <div style="flex-shrink:0;">
+        {% if q.already_responded %}
+          <span style="font-size:11px;padding:6px 14px;border-radius:20px;font-weight:700;
+            background:rgba(0,212,170,.15);color:var(--accent);">✅ You responded</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if not q.already_responded %}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <form method="POST" action="{{ url_for('citizen.respond_query', qid=q.id) }}">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">Your Response *</label>
+          <textarea name="response" class="form-control" rows="3"
+            placeholder="e.g. Yes I can confirm this issue exists near my area. I saw it yesterday near the bus stop…"
+            required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">📤 Submit Response</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div style="text-align:center;padding:60px;color:var(--muted);">
+    <div style="font-size:48px;margin-bottom:14px;">🎉</div>
+    <div style="font-size:15px;font-weight:600;">No open queries in your area!</div>
+    <div style="font-size:12px;margin-top:8px;">Check back later — the Municipal Head will raise queries when verification is needed.</div>
+  </div>
+{% endif %}
+{% endblock %}

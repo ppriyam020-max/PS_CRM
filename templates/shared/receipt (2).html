@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Complaint Receipt #{{ complaint.id }} — PS-CRM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:#fff; color:#1a1f2e;
+           max-width:740px; margin:0 auto; padding:32px 24px; }
+
+    /* ── SCREEN: action bar ── */
+    .action-bar {
+      display:flex; gap:10px; margin-bottom:28px; align-items:center;
+      padding:12px 16px; background:#f4f6f9; border-radius:10px;
+      border:1px solid #dde1e7;
+    }
+    .action-bar span { font-size:13px; color:#6b7280; flex:1; }
+    .btn { padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600;
+           cursor:pointer; border:none; transition:.2s; text-decoration:none;
+           display:inline-flex; align-items:center; gap:6px; }
+    .btn-print { background:#00d4aa; color:#0d1117; }
+    .btn-back  { background:#f0f2f5; color:#1a1f2e; border:1px solid #dde1e7; }
+
+    @media print {
+      .action-bar { display:none !important; }
+      body { padding:0; }
+      .page { padding:20px; }
+    }
+
+    /* ── RECEIPT ── */
+    .page { background:#fff; border:2px solid #1a1f2e; border-radius:4px; padding:32px; position:relative; }
+
+    /* Watermark */
+    .watermark {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-35deg);
+      font-size:80px; font-weight:800; color:rgba(0,212,170,.06);
+      font-family:'Syne',sans-serif; white-space:nowrap; pointer-events:none; z-index:0;
+    }
+
+    /* Header */
+    .header { display:flex; justify-content:space-between; align-items:flex-start;
+               border-bottom:3px solid #1a1f2e; padding-bottom:20px; margin-bottom:20px; position:relative;z-index:1; }
+    .org-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#1a3a6b; }
+    .org-sub  { font-size:11px; color:#6b7280; letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+    .org-address { font-size:11px; color:#6b7280; margin-top:6px; line-height:1.6; }
+    .receipt-label { text-align:right; }
+    .receipt-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+                     color:#1a1f2e; letter-spacing:1px; text-transform:uppercase; }
+    .receipt-id { font-size:24px; font-weight:800; color:#1a3a6b;
+                  font-family:'Syne',sans-serif; margin-top:2px; }
+    .receipt-date { font-size:11px; color:#6b7280; margin-top:4px; }
+
+    /* Status badge */
+    .status-badge {
+      display:inline-flex; align-items:center; gap:6px; padding:6px 16px;
+      border-radius:20px; font-size:11px; font-weight:800; text-transform:uppercase;
+      letter-spacing:1px; margin-bottom:20px;
+    }
+    .sb-reg  { background:#fef2f2; color:#dc2626; border:2px solid #dc2626; }
+    .sb-prog { background:#fffbeb; color:#d97706; border:2px solid #d97706; }
+    .sb-res  { background:#f0fdf4; color:#16a34a; border:2px solid #16a34a; }
+    .sb-rej  { background:#f9fafb; color:#6b7280; border:2px solid #6b7280; }
+
+    /* Section */
+    .section { margin-bottom:20px; position:relative;z-index:1; }
+    .section-title {
+      font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px;
+      color:#6b7280; margin-bottom:10px; padding-bottom:6px;
+      border-bottom:1px solid #e5e7eb;
+    }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { }
+    .field-label { font-size:10px; color:#9ca3af; margin-bottom:2px; font-weight:500; }
+    .field-val   { font-size:13px; font-weight:600; color:#1a1f2e; }
+
+    .desc-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;
+                padding:12px; font-size:13px; line-height:1.7; color:#374151; }
+
+    /* Priority tag */
+    .p-critical { color:#dc2626; } .p-high { color:#ea580c; }
+    .p-medium   { color:#d97706; } .p-low  { color:#6b7280; }
+
+    /* Timeline */
+    .timeline { margin-top:8px; }
+    .tl-item { display:flex; gap:12px; margin-bottom:12px; }
+    .tl-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+    .tl-line { position:absolute; left:4px; top:13px; bottom:0; width:2px; background:#e5e7eb; }
+    .tl-wrap { position:relative; padding-left:22px; }
+    .tl-note { font-size:12px; color:#374151; line-height:1.6; }
+    .tl-meta { font-size:10px; color:#9ca3af; margin-top:2px; }
+
+    /* QR-style reference box */
+    .ref-box {
+      background:#f9fafb; border:2px dashed #e5e7eb; border-radius:8px;
+      padding:14px 18px; display:flex; align-items:center; gap:16px;
+      margin-bottom:20px; position:relative;z-index:1;
+    }
+    .ref-qr {
+      width:60px; height:60px; background:#1a1f2e; border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .qr-grid { display:grid; grid-template-columns:repeat(6,8px); gap:1px; }
+    .qr-cell { width:8px; height:8px; }
+    .ref-text { flex:1; }
+    .ref-code { font-family:'Syne',sans-serif; font-size:20px; font-weight:800;
+                color:#1a3a6b; letter-spacing:2px; }
+    .ref-sub  { font-size:11px; color:#6b7280; margin-top:2px; line-height:1.5; }
+
+    /* Footer */
+    .footer {
+      border-top:2px solid #1a1f2e; padding-top:16px; margin-top:20px;
+      display:flex; justify-content:space-between; align-items:flex-end;
+      font-size:10px; color:#9ca3af; position:relative;z-index:1;
+    }
+    .footer-note { line-height:1.7; }
+    .stamp {
+      border:3px solid #00d4aa; border-radius:50%; width:64px; height:64px;
+      display:flex; align-items:center; justify-content:center; text-align:center;
+      font-size:8px; font-weight:800; color:#1a3a6b; text-transform:uppercase;
+      letter-spacing:.5px; line-height:1.3; transform:rotate(-15deg);
+      opacity:{% if complaint.status == 'Resolved' %}1{% else %}0{% endif %};
+    }
+  </style>
+</head>
+<body>
+
+<!-- ACTION BAR (screen only) -->
+<div class="action-bar">
+  <span>🖨️ Complaint Receipt #{{ complaint.id }} — ready to print</span>
+  <a href="javascript:history.back()" class="btn btn-back">← Back</a>
+  <button class="btn btn-print" onclick="window.print()">🖨️ Print Receipt</button>
+</div>
+
+<!-- RECEIPT PAGE -->
+<div class="page">
+  <div class="watermark">PS-CRM</div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="org-name">PS-CRM</div>
+      <div class="org-sub">Public Services CRM — Delhi</div>
+      <div class="org-address">
+        Municipal Office, Connaught Place<br>
+        New Delhi – 110001, India<br>
+        📞 +91 8375579916
+      </div>
+    </div>
+    <div class="receipt-label">
+      <div class="receipt-title">Complaint Receipt</div>
+      <div class="receipt-id">#{{ '%05d'|format(complaint.id) }}</div>
+      <div class="receipt-date">Issued: {{ complaint.created_at[:10] }}</div>
+    </div>
+  </div>
+
+  <!-- STATUS + REFERENCE -->
+  <div>
+    {% set sb = 'sb-reg' if complaint.status=='Registered' else 'sb-prog' if complaint.status=='In Progress' else 'sb-res' if complaint.status=='Resolved' else 'sb-rej' %}
+    <div class="status-badge {{ sb }}">
+      {% if complaint.status=='Registered' %}🔴{% elif complaint.status=='In Progress' %}🟡{% elif complaint.status=='Resolved' %}✅{% else %}❌{% endif %}
+      {{ complaint.status }}
+    </div>
+  </div>
+
+  <!-- REF BOX -->
+  <div class="ref-box">
+    <div class="ref-qr">
+      <!-- Pseudo-QR pattern derived from complaint ID -->
+      <div class="qr-grid">
+        {% set seed = complaint.id * 7 + 13 %}
+        {% for i in range(36) %}
+        {% set filled = ((seed * (i+1) * 31) % 17) < 9 %}
+        <div class="qr-cell" style="background:{% if filled %}#00d4aa{% else %}transparent{% endif %};"></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="ref-text">
+      <div class="ref-code">PSCRM-{{ '%05d'|format(complaint.id) }}</div>
+      <div class="ref-sub">
+        Use this reference number to track your complaint.<br>
+        Visit <strong>http://localhost:5000/login</strong> → My Complaints
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLAINT DETAILS -->
+  <div class="section">
+    <div class="section-title">📋 Complaint Details</div>
+    <div class="grid2" style="margin-bottom:12px;">
+      <div class="field">
+        <div class="field-label">Department</div>
+        <div class="field-val">{{ complaint.dept_icon }} {{ complaint.dept_name }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Priority</div>
+        <div class="field-val p-{{ complaint.priority|lower }}">● {{ complaint.priority }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Area / Location</div>
+        <div class="field-val">📍 {{ complaint.area or 'Not specified' }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Date Filed</div>
+        <div class="field-val">{{ complaint.created_at[:10] }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Last Updated</div>
+        <div class="field-val">{{ complaint.updated_at[:10] }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Current Status</div>
+        <div class="field-val">{{ complaint.status }}</div>
+      </div>
+    </div>
+    <div class="field-label" style="margin-bottom:6px;">Description</div>
+    <div class="desc-box">{{ complaint.description }}</div>
+  </div>
+
+  <!-- CITIZEN DETAILS -->
+  <div class="section">
+    <div class="section-title">👤 Citizen Details</div>
+    <div class="grid2">
+      <div class="field">
+        <div class="field-label">Full Name</div>
+        <div class="field-val">{{ complaint.citizen_name }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <div class="field-val">{{ complaint.citizen_email }}</div>
+      </div>
+      {% if complaint.citizen_phone %}
+      <div class="field">
+        <div class="field-label">Phone</div>
+        <div class="field-val">{{ complaint.citizen_phone }}</div>
+      </div>
+      {% endif %}
+      {% if complaint.citizen_area %}
+      <div class="field">
+        <div class="field-label">Registered Area</div>
+        <div class="field-val">{{ complaint.citizen_area }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ACTIVITY TIMELINE -->
+  {% if updates %}
+  <div class="section">
+    <div class="section-title">📍 Activity Timeline</div>
+    <div class="tl-wrap">
+      {% for u in updates %}
+      <div class="tl-item">
+        <div style="position:relative;">
+          <div class="tl-dot" style="background:{% if u.status=='Resolved' %}#16a34a{% elif u.status=='In Progress' %}#d97706{% elif u.status=='Rejected' %}#dc2626{% else %}#7c6af7{% endif %};"></div>
+          {% if not loop.last %}
+          <div style="position:absolute;left:4px;top:13px;bottom:-12px;width:2px;background:#e5e7eb;"></div>
+          {% endif %}
+        </div>
+        <div>
+          <div class="tl-note">{{ u.note }}</div>
+          <div class="tl-meta">
+            {{ u.by_name }} ({{ u.by_role|title }})
+            {% if u.status %} → <strong>{{ u.status }}</strong>{% endif %}
+            · {{ u.created_at[:16] }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">
+      This is an official computer-generated receipt from PS-CRM Municipal Platform.<br>
+      No signature required. Valid as proof of complaint registration.<br>
+      For queries: support@pscrm.in · +91 8375579916
+    </div>
+    <div class="stamp">
+      {% if complaint.status == 'Resolved' %}RESOLVED{% endif %}
+      PSCRM<br>DELHI
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

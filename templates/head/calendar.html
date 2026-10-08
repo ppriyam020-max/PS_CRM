@@ -1,0 +1,46 @@
+{% extends "shared/base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block page_title %}City Events Calendar{% endblock %}
+{% block sidebar_nav %}
+<div class="nav-section">
+  <div class="nav-label">City Overview</div>
+  <a href="{{ url_for('head.dashboard') }}"    class="nav-item {% if request.endpoint=='head.dashboard'    %}active{% endif %}"><span class="nav-icon">🏙️</span> Dashboard</a>
+  <a href="{{ url_for('head.overview') }}"     class="nav-item {% if request.endpoint=='head.overview'     %}active{% endif %}"><span class="nav-icon">📊</span> All Complaints</a>
+  <a href="{{ url_for('head.departments') }}"  class="nav-item {% if request.endpoint=='head.departments'  %}active{% endif %}"><span class="nav-icon">🏛️</span> Departments</a>
+</div>
+<div class="nav-section">
+  <div class="nav-label">Management</div>
+  <a href="{{ url_for('head.budget') }}"       class="nav-item {% if request.endpoint=='head.budget'       %}active{% endif %}"><span class="nav-icon">💰</span> Budget</a>
+  <a href="{{ url_for('head.labour') }}"       class="nav-item {% if request.endpoint=='head.labour'       %}active{% endif %}"><span class="nav-icon">👷</span> Labour</a>
+  <a href="{{ url_for('head.notices') }}"      class="nav-item {% if request.endpoint=='head.notices'      %}active{% endif %}"><span class="nav-icon">📢</span> Notices</a>
+  <a href="{{ url_for('head.calendar') }}"     class="nav-item {% if request.endpoint=='head.calendar'     %}active{% endif %}"><span class="nav-icon">🗓️</span> Calendar</a>
+</div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-title">🗓️ All Scheduled Events ({{ events|length }})</div>
+  {% if events %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Title</th><th>Type</th><th>Department</th><th>Created By</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+      <tr>
+        <td style="font-weight:600;color:var(--accent);">{{ e.event_date }}</td>
+        <td>
+          <div style="font-size:13px;font-weight:500;">{{ e.title }}</div>
+          {% if e.description %}<div style="font-size:10px;color:var(--muted);">{{ e.description[:60] }}</div>{% endif %}
+        </td>
+        <td><span style="font-size:10px;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--muted);">{{ e.type }}</span></td>
+        <td>{{ e.dept_name or 'All Departments' }}</td>
+        <td style="font-size:11px;color:var(--muted);">{{ e.created_by_name }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;color:var(--muted);padding:40px;">No events scheduled.</div>
+  {% endif %}
+</div>
+{% endblock %}
